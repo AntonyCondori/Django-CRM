@@ -1,1 +1,281 @@
-<h1>GitHub pages test</h1>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Django-CRM | Presentación</title>
+	<meta name="description" content="Presentación de Django-CRM - Proyecto Scrum y DevOps" />
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+			color: #333;
+			background: #f9f9f9;
+			line-height: 1.6;
+		}
+
+		.container {
+			max-width: 1000px;
+			margin: 0 auto;
+			padding: 0 20px;
+		}
+
+		header {
+			background: white;
+			padding: 30px 0;
+			border-bottom: 1px solid #ddd;
+			margin-bottom: 30px;
+		}
+
+		header h1 {
+			font-size: 28px;
+			color: #2457ff;
+			margin-bottom: 8px;
+		}
+
+		header p {
+			color: #666;
+		}
+
+		section {
+			background: white;
+			margin-bottom: 20px;
+			padding: 25px;
+			border-radius: 8px;
+			border-left: 4px solid #2457ff;
+		}
+
+		h2 {
+			font-size: 22px;
+			color: #2457ff;
+			margin-bottom: 15px;
+		}
+
+		h3 {
+			font-size: 16px;
+			margin-top: 15px;
+			margin-bottom: 10px;
+		}
+
+		p {
+			color: #555;
+			margin-bottom: 12px;
+		}
+
+		ul, ol {
+			margin-left: 20px;
+		}
+
+		li {
+			margin-bottom: 8px;
+		}
+
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+			gap: 15px;
+			margin-top: 15px;
+		}
+
+		.card {
+			background: #f5f5f5;
+			padding: 15px;
+			border-radius: 6px;
+			border: 1px solid #ddd;
+		}
+
+		.card h3 {
+			color: #2457ff;
+		}
+
+		.tag-list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 12px;
+		}
+
+		.tag {
+			display: inline-block;
+			background: #eef3ff;
+			color: #2742a8;
+			padding: 5px 12px;
+			border-radius: 20px;
+			font-size: 12px;
+			font-weight: 600;
+		}
+
+		.team-list {
+			list-style: none;
+		}
+
+		.team-item {
+			padding: 12px 0;
+			border-bottom: 1px solid #ddd;
+		}
+
+		.team-item:last-child {
+			border-bottom: none;
+		}
+
+		.team-item strong {
+			color: #2457ff;
+		}
+
+		footer {
+			text-align: center;
+			padding: 20px;
+			color: #999;
+			font-size: 13px;
+		}
+
+		@media (max-width: 768px) {
+			.grid {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Django-CRM</h1>
+			<p>Plataforma CRM moderna para gestión comercial - Presentación del equipo y software seleccionado</p>
+		</header>
+
+		<section>
+			<h2>1. Objetivo del proyecto</h2>
+			<p>
+				Presentar de forma clara y atractiva un software CRM moderno (Django-CRM / BottleCRM) 
+				que integra gestión de clientes, oportunidades, casos y facturación en una sola plataforma. 
+				El objetivo es mostrar al equipo de trabajo y explicar el valor técnico y funcional de la solución.
+			</p>
+		</section>
+
+		<section>
+			<h2>2. Software seleccionado: Django-CRM</h2>
+			<h3>Información del software seleccionado</h3>
+			<ul>
+				<li><strong>Nombre del Producto:</strong> BottleCRM (Open Source) - Django-CRM</li>
+				<li><strong>Repositorio:</strong> <a href="https://github.com/AntonyCondori/Django-CRM" target="_blank" rel="noreferrer">https://github.com/AntonyCondori/Django-CRM</a></li>
+				<li><strong>Dominio:</strong> Sistema CRM para gestión comercial integral, con ventas, soporte y facturación.</li>
+				<li><strong>Complejidad:</strong> Media-alta. Plataforma full-stack con 7 módulos y arquitectura multi-tenant con PostgreSQL RLS.</li>
+				<li><strong>Viabilidad Técnica y Legal:</strong> Licencia MIT, stack Django 5.x + SvelteKit 2.x, Docker Compose, PostgreSQL RLS y Redis.</li>
+			</ul>
+
+			<h3>Descripción general</h3>
+			<p>
+				Django-CRM es una plataforma CRM open source diseñada para startups y pequeñas empresas. 
+				Combina un backend robusto basado en Django REST Framework con una interfaz moderna en SvelteKit.
+			</p>
+			
+			<h3>Módulos principales</h3>
+			<ul>
+				<li><strong>Leads:</strong> Seguimiento de prospectos en el ciclo de ventas</li>
+				<li><strong>Cuentas:</strong> Administración de empresas y organizaciones clientes</li>
+				<li><strong>Contactos:</strong> Gestión de personas y datos de contacto</li>
+				<li><strong>Oportunidades:</strong> Seguimiento de deals y negociaciones</li>
+				<li><strong>Casos:</strong> Gestión de soporte y atención al cliente</li>
+				<li><strong>Tareas:</strong> Planificación, kanban y calendario</li>
+				<li><strong>Invoices:</strong> Generación y gestión de facturas</li>
+			</ul>
+
+			<h3>Ventajas diferenciales</h3>
+			<ul>
+				<li><strong>Multi-tenant con RLS:</strong> Cada organización tiene datos completamente aislados a nivel de base de datos</li>
+				<li><strong>Seguridad:</strong> Autenticación JWT, gestión de permisos por equipos</li>
+				<li><strong>Automatización:</strong> Tareas en segundo plano (Celery), integración con AWS SES para correos</li>
+				<li><strong>Escalabilidad:</strong> Redis para caché, arquitectura preparada para producción</li>
+			</ul>
+
+			<div class="tag-list">
+				<span class="tag">Open Source</span>
+				<span class="tag">Multi-tenant</span>
+				<span class="tag">Seguro</span>
+				<span class="tag">Escalable</span>
+				<span class="tag">Automatizado</span>
+			</div>
+		</section>
+
+		<section>
+			<h2>3. Tecnologías principales</h2>
+			
+			<h3>Backend</h3>
+			<p>Django 5.x, Django REST Framework, PostgreSQL con Row-Level Security, JWT, Celery, Redis</p>
+			
+			<h3>Frontend</h3>
+			<p>SvelteKit 2.x, Svelte 5, TailwindCSS 4, shadcn-svelte, Lucide icons</p>
+			
+			<h3>Infraestructura</h3>
+			<p>Docker, AWS S3 (archivos), AWS SES (correos), PostgreSQL, Redis</p>
+
+			<div class="grid">
+				<div class="card">
+					<h3>Backend</h3>
+					<p>API REST robusta con autenticación JWT, manejo de datos complejos y permisos granulares</p>
+				</div>
+				<div class="card">
+					<h3>Frontend</h3>
+					<p>Interfaz moderna y responsive con componentes reutilizables y experiencia fluida</p>
+				</div>
+				<div class="card">
+					<h3>Base de datos</h3>
+					<p>PostgreSQL con RLS para aislamiento de datos por organización a nivel de BD</p>
+				</div>
+				<div class="card">
+					<h3>Tareas asincrónicas</h3>
+					<p>Celery + Redis para envío de correos, reportes y procesamiento en background</p>
+				</div>
+			</div>
+		</section>
+
+		<section>
+			<h2>4. Equipo de trabajo</h2>
+			<p>
+				Equipo conformado por 5 integrantes comprometidos con la implementación del proyecto 
+				utilizando metodología Scrum y prácticas DevOps.
+			</p>
+			
+			<ul class="team-list">
+				<li class="team-item">
+					<strong>Arce Valencia Anderson Lino</strong>
+					<span>rol1</span>
+				</li>
+				<li class="team-item">
+					<strong>Caracela Challco Anthony Jeffry</strong>
+					<span>rol2</span>
+				</li>
+				<li class="team-item">
+					<strong>Choquehuanca Bedoya Brayan Denilson</strong>
+					<span>rol3</span>
+				</li>
+				<li class="team-item">
+					<strong>Condori Caira Antony Beltran</strong>
+					<span>rol4</span>
+				</li>
+				<li class="team-item">
+					<strong>Cuno Cahuari Armando Steven</strong>
+					<span>rol5</span>
+				</li>
+			</ul>
+
+			<h3>Metodología</h3>
+			<p>
+				<strong>Scrum:</strong> Organización del trabajo en sprints, revisiones frecuentes y entrega iterativa de valor.
+			</p>
+			<p>
+				<strong>DevOps:</strong> Automatización de pruebas, despliegue continuo, monitoreo y mantenimiento.
+			</p>
+		</section>
+
+		<footer>
+			<strong>Django-CRM / BottleCRM</strong> · Django-CRM
+		</footer>
+	</div>
+	</body>
+</html>

@@ -75,6 +75,33 @@
 			margin-bottom: 8px;
 		}
 
+		/* Estilos para las Tablas de Roles */
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 15px;
+			margin-bottom: 30px;
+			font-size: 14px;
+		}
+
+		th {
+			background-color: #0d1117;
+			color: white;
+			text-align: left;
+			padding: 12px;
+			border: 1px solid #ddd;
+		}
+
+		td {
+			padding: 12px;
+			border: 1px solid #ddd;
+			vertical-align: top;
+		}
+
+		tr:nth-child(even) {
+			background-color: #fcfcfc;
+		}
+
 		.grid {
 			display: grid;
 			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -151,8 +178,8 @@
 		<section>
 			<h2>1. Objetivo del proyecto</h2>
 			<p>
-				Presentar de forma clara y atractiva un software CRM moderno (Django-CRM / BottleCRM) 
-				que integra gestión de clientes, oportunidades, casos y facturación en una sola plataforma. 
+				Presentar de forma clara y atractiva un software CRM moderno (Django-CRM / BottleCRM) 
+				que integra gestión de clientes, oportunidades, casos y facturación en una sola plataforma. 
 				El objetivo es mostrar al equipo de trabajo y explicar el valor técnico y funcional de la solución.
 			</p>
 		</section>
@@ -170,7 +197,7 @@
 
 			<h3>Descripción general</h3>
 			<p>
-				Django-CRM es una plataforma CRM open source diseñada para startups y pequeñas empresas. 
+				Django-CRM es una plataforma CRM open source diseñada para startups y pequeñas empresas. 
 				Combina un backend robusto basado en Django REST Framework con una interfaz moderna en SvelteKit.
 			</p>
 			
@@ -237,30 +264,25 @@
 		<section>
 			<h2>4. Equipo de trabajo</h2>
 			<p>
-				Equipo conformado por 5 integrantes comprometidos con la implementación del proyecto 
+				Equipo conformado por 5 integrantes comprometidos con la implementación del proyecto 
 				utilizando metodología Scrum y prácticas DevOps.
 			</p>
 			
 			<ul class="team-list">
 				<li class="team-item">
 					<strong>Arce Valencia Anderson Lino</strong>
-					<span>rol1</span>
 				</li>
 				<li class="team-item">
 					<strong>Caracela Challco Anthony Jeffry</strong>
-					<span>rol2</span>
 				</li>
 				<li class="team-item">
 					<strong>Choquehuanca Bedoya Brayan Denilson</strong>
-					<span>rol3</span>
 				</li>
 				<li class="team-item">
 					<strong>Condori Caira Antony Beltran</strong>
-					<span>rol4</span>
 				</li>
 				<li class="team-item">
 					<strong>Cuno Cahuari Armando Steven</strong>
-					<span>rol5</span>
 				</li>
 			</ul>
 
@@ -271,10 +293,201 @@
 			<p>
 				<strong>DevOps:</strong> Automatización de pruebas, despliegue continuo, monitoreo y mantenimiento.
 			</p>
+
+			<h3>Roles y Responsabilidades (Sprint 0)</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Integrante</th>
+						<th>Rol</th>
+						<th>Responsabilidades</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td><strong>Condori Caira Antony Beltran</strong></td>
+						<td>Líder</td>
+						<td>Coordinación general, ejecución del Fork, configuración de herramientas GitHub y despliegue inicial.</td>
+					</tr>
+					<tr>
+						<td><strong>Arce Valencia Anderson Lino</strong></td>
+						<td>Verificación Técnica</td>
+						<td>Validación de docker-compose.yml, conteo de KLOC (>10K) y cumplimiento de licencia MIT.</td>
+					</tr>
+					<tr>
+						<td><strong>Caracela Challco Anthony Jeffry</strong></td>
+						<td>Cronograma Maestro</td>
+						<td>Planificación de los Sprints de 15 días alineados a los hitos del curso y rotación de líderes.</td>
+					</tr>
+					<tr>
+						<td><strong>Cuno Cahuari Armando Steven</strong></td>
+						<td>Estándares y Formato</td>
+						<td>Manual de convivencia, documentación del stack tecnológico y estructura del artículo IEEE.</td>
+					</tr>
+					<tr>
+						<td><strong>Choquehuanca Bedoya Brayan Denilson</strong></td>
+						<td>Documentación Web</td>
+						<td>Creación y mantenimiento del portal de documentación en GitHub Pages.</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3>Roles y Responsabilidades (Sprint 1):</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Integrante</th>
+						<th>Rol</th>
+						<th>Responsabilidades</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Arce Valencia Anderson Lino</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Caracela Challco Anthony Jeffry</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Choquehuanca Bedoya Brayan Denilson</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Condori Caira Antony Beltran</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Cuno Cahuari Armando Steven</td>
+						<td></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3>Roles y Responsabilidades (Sprint 2):</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Integrante</th>
+						<th>Rol</th>
+						<th>Responsabilidades</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Arce Valencia Anderson Lino</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Caracela Challco Anthony Jeffry</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Choquehuanca Bedoya Brayan Denilson</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Condori Caira Antony Beltran</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Cuno Cahuari Armando Steven</td>
+						<td></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3>Roles y Responsabilidades (Sprint 3):</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Integrante</th>
+						<th>Rol</th>
+						<th>Responsabilidades</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Arce Valencia Anderson Lino</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Caracela Challco Anthony Jeffry</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Choquehuanca Bedoya Brayan Denilson</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Condori Caira Antony Beltran</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Cuno Cahuari Armando Steven</td>
+						<td></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+
+			<h3>Roles y Responsabilidades (Sprint 4):</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Integrante</th>
+						<th>Rol</th>
+						<th>Responsabilidades</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Arce Valencia Anderson Lino</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Caracela Challco Anthony Jeffry</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Choquehuanca Bedoya Brayan Denilson</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Condori Caira Antony Beltran</td>
+						<td></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td>Cuno Cahuari Armando Steven</td>
+						<td></td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+
 		</section>
 
 		<footer>
-			<strong>Django-CRM / BottleCRM</strong> · Django-CRM
+			<strong>Django-CRM / BottleCRM</strong> · IPS 2026-A
 		</footer>
 	</div>
 	</body>

@@ -20,14 +20,18 @@ WORKDIR /app
 # Install uv (fast Python package manager).
 COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /usr/local/bin/uv
 
-# Install Python dependencies into /app/.venv (layer cached on lockfile changes)
+# Create venv directory and install Python dependencies
+RUN python -m venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH" VIRTUAL_ENV="/app/.venv"
 COPY backend/pyproject.toml backend/uv.lock backend/.python-version ./
 RUN uv sync --frozen --no-install-project
 
 # Copy backend source
 COPY backend/ .
 
-# Put the venv's binaries on PATH so `python`, `gunicorn`, `celery` etc. resolve.
-ENV PATH="/app/.venv/bin:$PATH"
+# Copy and make entrypoint executable
+COPY docker/backend/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
+ENTRYPOINT ["/entrypoint.sh"]

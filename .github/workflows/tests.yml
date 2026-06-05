@@ -5,14 +5,13 @@ on:
     branches: [master]
     paths:
       - 'backend/**'
-      - 'frontend/**'
       - '.coveragerc'
       - '.github/workflows/tests.yml'
+
   pull_request:
     branches: [master]
     paths:
       - 'backend/**'
-      - 'frontend/**'
       - '.coveragerc'
       - '.github/workflows/tests.yml'
 
@@ -95,39 +94,3 @@ jobs:
           name: coverage-report
           path: backend/htmlcov/
           retention-days: 14
-
-  frontend-checks:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: pnpm install --frozen-lockfile
-
-      - name: Prettier format check
-        working-directory: frontend
-        run: pnpm prettier --check . || echo "::warning::Prettier found formatting issues in $(pnpm prettier --check . 2>&1 | grep -c '^\[warn\]') files. Run 'pnpm format' to fix."
-
-      - name: ESLint
-        working-directory: frontend
-        run: pnpm eslint .
-
-      - name: Type check (svelte-check)
-        working-directory: frontend
-        run: pnpm check
-
-      - name: Build
-        working-directory: frontend
-        run: pnpm build

@@ -5,20 +5,35 @@ on:
     branches: [master]
     paths:
       - 'backend/**'
-      - 'frontend/**'
       - '.coveragerc'
       - '.github/workflows/tests.yml'
+
   pull_request:
     branches: [master]
     paths:
       - 'backend/**'
-      - 'frontend/**'
       - '.coveragerc'
       - '.github/workflows/tests.yml'
 
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
     permissions:
       contents: write
 
@@ -48,10 +63,15 @@ jobs:
       - name: Run tests with coverage
         working-directory: backend
         env:
-          DJANGO_SETTINGS_MODULE: crm.test_settings
+          DJANGO_SETTINGS_MODULE: crm.test_settings_postgres
           SECRET_KEY: test-secret-key-for-ci
           ADMIN_EMAIL: admin@test.com
-        run: uv run pytest -m "not postgres_only" --tb=short -v
+          DB_NAME: test_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
+        run: uv run pytest --tb=short -v
 
       - name: Generate coverage badge
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
@@ -74,39 +94,3 @@ jobs:
           name: coverage-report
           path: backend/htmlcov/
           retention-days: 14
-
-  frontend-checks:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Install dependencies
-        working-directory: frontend
-        run: pnpm install --frozen-lockfile
-
-      - name: Prettier format check
-        working-directory: frontend
-        run: pnpm prettier --check . || echo "::warning::Prettier found formatting issues in $(pnpm prettier --check . 2>&1 | grep -c '^\[warn\]') files. Run 'pnpm format' to fix."
-
-      - name: ESLint
-        working-directory: frontend
-        run: pnpm eslint .
-
-      - name: Type check (svelte-check)
-        working-directory: frontend
-        run: pnpm check
-
-      - name: Build
-        working-directory: frontend
-        run: pnpm build

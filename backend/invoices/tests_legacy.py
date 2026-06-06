@@ -76,6 +76,7 @@ class InvoiceCreateTest:
             state="from state",
             postcode=12346,
             country="IN",
+            org=self.org,
         )
 
         self.to_address = Address.objects.create(
@@ -84,6 +85,7 @@ class InvoiceCreateTest:
             state="to state",
             postcode=12346,
             country="IN",
+            org=self.org,
         )
 
         self.invoice = Invoice.objects.create(

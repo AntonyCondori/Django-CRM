@@ -14,11 +14,26 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - '.coveragerc'
-      - '.github/workflows/tests.yml'
 
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: crm_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres-test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     permissions:
       contents: write
 
@@ -51,7 +66,12 @@ jobs:
           DJANGO_SETTINGS_MODULE: crm.test_settings
           SECRET_KEY: test-secret-key-for-ci
           ADMIN_EMAIL: admin@test.com
-        run: uv run pytest -m "not postgres_only" --tb=short -v
+          DB_NAME: crm_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres-test-password
+          DB_HOST: localhost
+          DB_PORT: 5432
+        run: uv run pytest --tb=short -v
 
       - name: Generate coverage badge
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
@@ -61,7 +81,7 @@ jobs:
       - name: Commit coverage badge
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.email "github-actions[bot]@://github.com"
           git config --local user.name "github-actions[bot]"
           git add coverage-badge.svg || true
           git diff --staged --quiet || git commit -m "Update coverage badge [skip ci]"

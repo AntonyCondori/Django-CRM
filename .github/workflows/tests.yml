@@ -113,7 +113,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: frontend
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Prettier format check
         working-directory: frontend

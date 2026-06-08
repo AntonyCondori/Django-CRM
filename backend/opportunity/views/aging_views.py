@@ -1,4 +1,5 @@
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +14,12 @@ from opportunity.workflow import CLOSED_STAGES, DEFAULT_STAGE_EXPECTED_DAYS
 class StageAgingConfigView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
+    @extend_schema(
+        tags=["Opportunity Stages"],
+        operation_id="opportunities_stage_aging_retrieve",
+        responses={200: StageAgingConfigSerializer(many=True)},
+        description="Obtiene la configuración del tiempo de permanencia (aging) permitido para todas las etapas abiertas del embudo comercial."
+    )
     def get(self, request):
         """Return aging config for all open stages, with defaults for unconfigured stages."""
         org = request.profile.org
@@ -37,6 +44,24 @@ class StageAgingConfigView(APIView):
                 })
         return Response(result)
 
+    @extend_schema(
+        tags=["Opportunity Stages"],
+        operation_id="opportunities_stage_aging_bulk_update",
+        request=StageAgingConfigSerializer(many=True),
+        responses={
+            200: inline_serializer(
+                name="StageAgingConfigBulkUpdateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "configs": StageAgingConfigSerializer(many=True)
+                }
+            ),
+            400: inline_serializer(name="StageAgingConfigBadRequest", fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}),
+            403: inline_serializer(name="StageAgingConfigForbidden", fields={"error": serializers.BooleanField(), "errors": serializers.CharField()})
+        },
+        description="Actualiza de forma masiva (bulk upsert) los límites de alerta y días esperados para las etapas del embudo comercial."
+    )
     def put(self, request):
         """Bulk upsert stage aging configs (admin only)."""
         if request.profile.role != "ADMIN" and not request.user.is_superuser:

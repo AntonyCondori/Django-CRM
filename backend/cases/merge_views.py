@@ -33,6 +33,7 @@ def _can_merge(profile, source: Case, target: Case) -> bool:
     return source.created_by_id == user.id and target.created_by_id == user.id
 
 
+@extend_schema(exclude=True)
 class CaseMergeView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 

@@ -8,7 +8,9 @@ import logging
 
 from django.http import HttpResponse
 from django.utils import timezone
-from rest_framework import status
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -34,6 +36,41 @@ class PublicInvoiceView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @extend_schema(
+        tags=["Public Portal"],
+        operation_id="public_invoices_retrieve",
+        responses={
+            200: inline_serializer(
+                name="PublicInvoiceResponse",
+                fields={
+                    "id": serializers.CharField(),
+                    "invoice_number": serializers.CharField(),
+                    "invoice_title": serializers.CharField(),
+                    "status": serializers.CharField(),
+                    "client_name": serializers.CharField(),
+                    "client_email": serializers.CharField(),
+                    "issue_date": serializers.CharField(),
+                    "due_date": serializers.CharField(),
+                    "subtotal": serializers.CharField(),
+                    "discount_amount": serializers.CharField(),
+                    "tax_amount": serializers.CharField(),
+                    "total_amount": serializers.CharField(),
+                    "amount_paid": serializers.CharField(),
+                    "amount_due": serializers.CharField(),
+                    "currency": serializers.CharField(),
+                    "notes": serializers.CharField(allow_blank=True),
+                    "terms": serializers.CharField(allow_blank=True),
+                    "billing_address": serializers.JSONField(),
+                    "line_items": serializers.ListField(child=serializers.JSONField()),
+                    "payments": serializers.ListField(child=serializers.JSONField()),
+                    "org": serializers.JSONField(),
+                    "template": serializers.JSONField()
+                }
+            ),
+            404: inline_serializer(name="PublicInvoiceNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Obtiene los detalles públicos completos de una factura mediante su token único."
+    )
     def get(self, request, token):
         """Get invoice by public token"""
         invoice = Invoice.objects.filter(
@@ -134,6 +171,17 @@ class PublicInvoicePDFView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @extend_schema(
+        tags=["Public Portal"],
+        operation_id="public_invoices_pdf",
+        responses={
+            200: serializers.CharField(), # Flujo plano/stream para descarga binaria de PDF
+            404: inline_serializer(name="PublicInvoicePdfNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            503: inline_serializer(name="PublicInvoicePdfUnavailable", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            500: inline_serializer(name="PublicInvoicePdfError", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Descarga el documento binario PDF de la factura mediante su token público sin requerir login."
+    )
     def get(self, request, token):
         """Download invoice PDF by public token"""
         invoice = Invoice.objects.filter(
@@ -176,6 +224,38 @@ class PublicEstimateView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @extend_schema(
+        tags=["Public Portal"],
+        operation_id="public_estimates_retrieve",
+        responses={
+            200: inline_serializer(
+                name="PublicEstimateResponse",
+                fields={
+                    "id": serializers.CharField(),
+                    "estimate_number": serializers.CharField(),
+                    "title": serializers.CharField(),
+                    "status": serializers.CharField(),
+                    "client_name": serializers.CharField(),
+                    "client_email": serializers.CharField(),
+                    "issue_date": serializers.CharField(),
+                    "expiry_date": serializers.CharField(),
+                    "subtotal": serializers.CharField(),
+                    "discount_amount": serializers.CharField(),
+                    "tax_amount": serializers.CharField(),
+                    "total_amount": serializers.CharField(),
+                    "currency": serializers.CharField(),
+                    "notes": serializers.CharField(allow_blank=True),
+                    "terms": serializers.CharField(allow_blank=True),
+                    "client_address": serializers.JSONField(),
+                    "line_items": serializers.ListField(child=serializers.JSONField()),
+                    "org": serializers.JSONField(),
+                    "template": serializers.JSONField()
+                }
+            ),
+            404: inline_serializer(name="PublicEstimateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Obtiene los detalles públicos completos de una cotización mediante su token único."
+    )
     def get(self, request, token):
         """Get estimate by public token"""
         estimate = Estimate.objects.filter(
@@ -267,6 +347,17 @@ class PublicEstimatePDFView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @extend_schema(
+        tags=["Public Portal"],
+        operation_id="public_estimates_pdf",
+        responses={
+            200: serializers.CharField(),
+            404: inline_serializer(name="PublicEstimatePdfNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            503: inline_serializer(name="PublicEstimatePdfUnavailable", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            500: inline_serializer(name="PublicEstimatePdfError", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Descarga el documento binario PDF de la cotización mediante su token público."
+    )
     def get(self, request, token):
         """Download estimate PDF by public token"""
         estimate = Estimate.objects.filter(
@@ -300,6 +391,7 @@ class PublicEstimatePDFView(APIView):
             )
 
 
+@extend_schema(exclude=True)
 class PublicEstimateAcceptView(APIView):
     """
     Public endpoint to accept an estimate - accessible via public token.
@@ -309,6 +401,16 @@ class PublicEstimateAcceptView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @extend_schema(
+        tags=["Public Portal"],
+        operation_id="public_estimates_accept",
+        responses={
+            200: inline_serializer(name="PublicEstimateAcceptSuccess", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            400: inline_serializer(name="PublicEstimateAcceptInvalidState", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="PublicEstimateAcceptNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Permite al cliente aceptar la cotización directamente desde el portal público."
+    )
     def post(self, request, token):
         """Accept estimate by public token"""
         estimate = Estimate.objects.filter(
@@ -337,6 +439,7 @@ class PublicEstimateAcceptView(APIView):
         return Response({"error": False, "message": "Estimate accepted successfully"})
 
 
+@extend_schema(exclude=True)
 class PublicEstimateDeclineView(APIView):
     """
     Public endpoint to decline an estimate - accessible via public token.
@@ -346,6 +449,16 @@ class PublicEstimateDeclineView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @extend_schema(
+        tags=["Public Portal"],
+        operation_id="public_estimates_decline",
+        responses={
+            200: inline_serializer(name="PublicEstimateDeclineSuccess", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            400: inline_serializer(name="PublicEstimateDeclineInvalidState", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="PublicEstimateDeclineNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Permite al cliente rechazar la cotización desde el portal público."
+    )
     def post(self, request, token):
         """Decline estimate by public token"""
         estimate = Estimate.objects.filter(

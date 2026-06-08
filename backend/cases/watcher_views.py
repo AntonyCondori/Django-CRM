@@ -15,13 +15,14 @@ already watch (so a watcher who was un-assigned can still unsubscribe).
 from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from cases.models import Case, CaseWatcher
-
+from cases.serializer import CaseSerializer
 
 def _visible_cases_qs(profile):
     """Cases the requester is allowed to interact with.
@@ -39,11 +40,22 @@ def _visible_cases_qs(profile):
     ).distinct()
 
 
+@extend_schema(exclude=True)
 class WatchView(APIView):
     """POST/DELETE /api/cases/<pk>/watch/"""
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        responses={200: inline_serializer(
+            name="WatchResponse",
+            fields={
+                "watching": serializers.BooleanField(),
+                "subscribed_via": serializers.CharField()
+            }
+        )},
+        description="Agrega al usuario actual a la lista de observadores del caso."
+    )
     def post(self, request, pk, *args, **kwargs):
         case = get_object_or_404(_visible_cases_qs(request.profile), pk=pk)
         try:
@@ -63,6 +75,10 @@ class WatchView(APIView):
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        responses={204: None},
+        description="Remueve al usuario actual de la lista de observadores."
+    )
     def delete(self, request, pk, *args, **kwargs):
         case = get_object_or_404(_visible_cases_qs(request.profile), pk=pk)
         CaseWatcher.objects.filter(case=case, profile=request.profile).delete()
@@ -74,6 +90,16 @@ class WatchersListView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        responses={200: inline_serializer(
+            name="WatchersListResponse",
+            fields={
+                "count": serializers.IntegerField(),
+                "watchers": serializers.ListField(child=serializers.JSONField())
+            }
+        )},
+        description="Obtiene la lista de todos los agentes que observan este caso."
+    )
     def get(self, request, pk, *args, **kwargs):
         case = get_object_or_404(_visible_cases_qs(request.profile), pk=pk)
         rows = (
@@ -107,6 +133,16 @@ class WatchingListView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        responses={200: inline_serializer(
+            name="WatchingListResponse",
+            fields={
+                "count": serializers.IntegerField(),
+                "cases": CaseSerializer(many=True)
+            }
+        )},
+        description="Retorna la lista de casos que el perfil del usuario actual está observando."
+    )
     def get(self, request, *args, **kwargs):
         from cases.serializer import CaseSerializer
 

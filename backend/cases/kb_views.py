@@ -9,7 +9,8 @@ deliberate cut. The endpoint feeds the comment composer's typeahead.
 from __future__ import annotations
 
 from django.db.models import Q
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -63,12 +64,37 @@ class SolutionSuggestionsView(APIView):
 
     @extend_schema(
         tags=["Cases"],
+        operation_id="cases_solution_suggestions_list",
         parameters=[
             OpenApiParameter("q", str, description="Search query"),
             OpenApiParameter(
                 "limit", int, description="Max results, default 5, capped at 20"
             ),
         ],
+        responses={
+            200: inline_serializer(
+                name="SolutionSuggestionsResponse",
+                fields={
+                    "count": serializers.IntegerField(),
+                    "q": serializers.CharField(allow_blank=True),
+                    "results": inline_serializer(
+                        name="SolutionSuggestionItem",
+                        fields={
+                            "id": serializers.CharField(),
+                            "title": serializers.CharField(),
+                            "snippet": serializers.CharField(allow_blank=True),
+                            "body": serializers.CharField(allow_blank=True),
+                            "updated_at": serializers.CharField(allow_null=True),
+                        }
+                    )
+                }
+            ),
+            404: inline_serializer(
+                name="SolutionSuggestionsNotFound",
+                fields={"error": serializers.CharField()}
+            )
+        },
+        description="Obtiene una lista de artículos y soluciones recomendadas de la Base de Conocimiento basados en el contexto del caso."
     )
     def get(self, request, pk):
         org = request.profile.org

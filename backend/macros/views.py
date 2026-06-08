@@ -17,7 +17,8 @@ Routes (all under /api/macros/):
 from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -69,6 +70,17 @@ def _resolve_scope_and_owner(profile, payload, instance=None):
 class MacroListCreateView(APIView):
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Macros"],
+        operation_id="macros_list",
+        responses={
+            200: inline_serializer(
+                name="MacroListResponse",
+                fields={"results": MacroSerializer(many=True)}
+            )
+        },
+        description="Lista todas las respuestas rápidas (macros) visibles para el usuario actual."
+    )
     def get(self, request, *args, **kwargs):
         qs = _visible_qs(request.profile)
         active_param = request.query_params.get("active")
@@ -80,6 +92,13 @@ class MacroListCreateView(APIView):
         qs = qs.order_by("-updated_at")
         return Response({"results": MacroSerializer(qs, many=True).data})
 
+    @extend_schema(
+        tags=["Macros"],
+        operation_id="macros_create",
+        request=MacroSerializer,
+        responses={201: MacroSerializer},
+        description="Crea una nueva macro asignándole el alcance correspondiente (personal u org)."
+    )
     def post(self, request, *args, **kwargs):
         serializer = MacroSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -122,6 +141,12 @@ class MacroDetailView(APIView):
             )
         return macro
 
+    @extend_schema(
+        tags=["Macros"],
+        operation_id="macros_retrieve",
+        responses={200: MacroSerializer},
+        description="Obtiene los detalles de una macro específica mediante su ID."
+    )
     def get(self, request, pk, *args, **kwargs):
         macro = get_object_or_404(Macro, pk=pk, org=request.profile.org)
         # Visibility: same rule as the list filter.
@@ -131,9 +156,23 @@ class MacroDetailView(APIView):
             )
         return Response(MacroSerializer(macro).data)
 
+    @extend_schema(
+        tags=["Macros"],
+        operation_id="macros_update",
+        request=MacroSerializer,
+        responses={200: MacroSerializer},
+        description="Actualiza por completo todos los campos de una macro existente."
+    )
     def put(self, request, pk, *args, **kwargs):
         return self._update(request, pk, partial=False)
 
+    @extend_schema(
+        tags=["Macros"],
+        operation_id="macros_partial_update",
+        request=MacroSerializer,
+        responses={200: MacroSerializer},
+        description="Actualiza de forma parcial los campos de una macro existente."
+    )
     def patch(self, request, pk, *args, **kwargs):
         return self._update(request, pk, partial=True)
 
@@ -161,6 +200,12 @@ class MacroDetailView(APIView):
         macro.save()
         return Response(MacroSerializer(macro).data)
 
+    @extend_schema(
+        tags=["Macros"],
+        operation_id="macros_destroy",
+        responses={204: None},
+        description="Elimina o desactiva lógicamente una macro según sus permisos de alcance."
+    )
     def delete(self, request, pk, *args, **kwargs):
         result = self._get_writable(request, pk)
         if isinstance(result, Response):
@@ -179,6 +224,21 @@ class MacroRenderView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Macros"],
+        operation_id="macros_render",
+        request=inline_serializer(
+            name="MacroRenderRequest",
+            fields={"case_id": serializers.CharField()}
+        ),
+        responses={
+            200: inline_serializer(
+                name="MacroRenderResponse",
+                fields={"rendered_body": serializers.CharField()}
+            )
+        },
+        description="Procesa una macro reemplazando sus marcadores dinámicos con la información de un caso real."
+    )
     def post(self, request, pk, *args, **kwargs):
         macro = get_object_or_404(Macro, pk=pk, org=request.profile.org)
         # Mirror visibility rules: a personal macro from another user

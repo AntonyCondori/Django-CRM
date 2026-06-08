@@ -29,6 +29,7 @@ from common.models import Attachments, Comment
 from common.permissions import HasOrgContext
 
 
+@extend_schema(exclude=True)
 class CaseUnmergeView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 

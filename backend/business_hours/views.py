@@ -15,6 +15,7 @@ Routes (all under /api/business-hours/):
 from datetime import time
 
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -74,10 +75,23 @@ class BusinessCalendarView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Business Hours"],
+        operation_id="business_hours_calendar_retrieve",
+        responses={200: BusinessCalendarSerializer},
+        description="Obtiene o crea bajo demanda el calendario comercial por defecto de la organización."
+    )
     def get(self, request, *args, **kwargs):
         cal = _get_or_create_default(request.profile.org)
         return Response(BusinessCalendarSerializer(cal).data)
 
+    @extend_schema(
+        tags=["Business Hours"],
+        operation_id="business_hours_calendar_update",
+        request=BusinessCalendarSerializer,
+        responses={200: BusinessCalendarSerializer},
+        description="Permite al administrador actualizar las horas de los días de la semana y la zona horaria."
+    )
     def put(self, request, pk, *args, **kwargs):
         if not _is_admin(request.profile):
             return Response(
@@ -102,6 +116,16 @@ class BusinessHolidayListView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Business Hours"],
+        operation_id="business_hours_holiday_create",
+        request=BusinessHolidaySerializer,
+        responses={
+            201: BusinessHolidaySerializer,
+            200: BusinessHolidaySerializer
+        },
+        description="Añade un nuevo día feriado individual al calendario comercial de la organización."
+    )
     def post(self, request, pk, *args, **kwargs):
         if not _is_admin(request.profile):
             return Response(
@@ -138,6 +162,12 @@ class BusinessHolidayDetailView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Business Hours"],
+        operation_id="business_hours_holiday_destroy",
+        responses={204: None},
+        description="Elimina de forma definitiva un día feriado específico del calendario utilizando su ID."
+    )
     def delete(self, request, pk, hid, *args, **kwargs):
         if not _is_admin(request.profile):
             return Response(

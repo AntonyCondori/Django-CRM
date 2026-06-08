@@ -1,5 +1,6 @@
 from django.db.models import Sum
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 
 from accounts.serializer import AccountSerializer
 from cases.approvals import Approval, ApprovalRule
@@ -51,18 +52,21 @@ class CaseSerializer(serializers.ModelSerializer):
     # Tier 3 time-tracking
     time_summary = serializers.SerializerMethodField()
 
+    @extend_schema_field(serializers.JSONField())
     def get_parent_summary(self, obj):
         if not obj.parent_id:
             return None
         p = obj.parent
         return {"id": str(p.id), "name": p.name, "status": p.status}
 
+    @extend_schema_field(serializers.IntegerField())
     def get_child_count(self, obj):
         # Prefer prefetched count when callers annotated it.
         if hasattr(obj, "_child_count"):
             return obj._child_count
         return obj.children.count()
 
+    @extend_schema_field(serializers.JSONField())
     def get_time_summary(self, obj):
         # Only stopped entries contribute to the summary; running timers
         # would otherwise double-count when the user keeps hitting refresh.

@@ -1084,10 +1084,36 @@ class CaseSolutionLinkView(APIView):
 
     @extend_schema(
         tags=["Cases"],
+        operation_id="cases_solution_link_create",
         request=inline_serializer(
             name="CaseSolutionLinkRequest",
             fields={"solution_id": serializers.CharField()},
         ),
+        responses={
+            201: inline_serializer(
+                name="CaseSolutionLinkCreateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "solution": SolutionSerializer()
+                }
+            ),
+            200: inline_serializer(
+                name="CaseSolutionLinkSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "solution": SolutionSerializer()
+                }
+            ),
+            404: inline_serializer(
+                name="CaseSolutionLinkNotFoundResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}
+            ),
+            400: inline_serializer(
+                name="CaseSolutionLinkBadRequestResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}
+            ),
+        },
+        description="Vincula un artículo de la base de conocimiento (Solution) a un caso específico."
     )
     def post(self, request, pk):
         case = self._get_case(pk, request.profile.org)
@@ -1121,7 +1147,18 @@ class CaseSolutionLinkView(APIView):
             ),
         )
 
-    @extend_schema(tags=["Cases"])
+    @extend_schema(
+        tags=["Cases"],
+        operation_id="cases_solution_link_destroy",
+        responses={
+            204: None,
+            404: inline_serializer(
+                name="CaseSolutionUnlinkNotFoundResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}
+            )
+        },
+        description="Desvincula un artículo de la base de conocimiento de un caso específico."
+    )
     def delete(self, request, pk, solution_pk):
         case = self._get_case(pk, request.profile.org)
         if not case:

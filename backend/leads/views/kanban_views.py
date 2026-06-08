@@ -26,6 +26,7 @@ from leads.serializer import (
 )
 
 
+@extend_schema(exclude=True)
 class LeadKanbanView(APIView):
     """
     Kanban board view for leads.
@@ -205,6 +206,7 @@ class LeadKanbanView(APIView):
         )
 
 
+@extend_schema(exclude=True)
 class LeadMoveView(APIView):
     """Move a lead to a different stage/status and update order."""
 
@@ -603,6 +605,7 @@ class LeadStageDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema(exclude=True)
 class LeadStageReorderView(APIView):
     """Bulk reorder stages in a pipeline."""
 

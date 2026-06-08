@@ -1,7 +1,8 @@
 from datetime import date
 
 from django.db.models import Q
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
+from rest_framework import status, serializers
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -48,6 +49,30 @@ class SalesGoalListView(APIView, LimitOffsetPagination):
             "assigned_to", "assigned_to__user", "team"
         ).distinct()
 
+    @extend_schema(
+        tags=["Sales Goals"],
+        operation_id="opportunities_goals_list",
+        parameters=[
+            OpenApiParameter("active", str, description="Filtrar metas activas ('true')", required=False),
+            OpenApiParameter("current", str, description="Filtrar metas vigentes a la fecha actual ('true')", required=False),
+            OpenApiParameter("assigned_to", str, description="Filtrar por ID de usuario asignado", required=False),
+            OpenApiParameter("team", str, description="Filtrar por ID de equipo", required=False),
+            OpenApiParameter("period_type", str, description="Filtrar por tipo de periodo (ej. 'MONTHLY')", required=False),
+            OpenApiParameter("search", str, description="Buscar por nombre de la meta", required=False),
+        ],
+        responses={
+            200: inline_serializer(
+                name="SalesGoalListResponse",
+                fields={
+                    "goals": SalesGoalSerializer(many=True), # Mapeo de tu serializador importado
+                    "goals_count": serializers.IntegerField(),
+                    "offset": serializers.IntegerField(allow_null=True),
+                    "per_page": serializers.IntegerField()
+                }
+            )
+        },
+        description="Obtiene el listado paginado y filtrado de las metas de ventas de la organización."
+    )
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset(request)
         results = self.paginate_queryset(queryset, request, view=self)
@@ -66,6 +91,35 @@ class SalesGoalListView(APIView, LimitOffsetPagination):
             }
         )
 
+    @extend_schema(
+        tags=["Sales Goals"],
+        operation_id="opportunities_goals_create",
+        request=SalesGoalCreateSerializer,
+        responses={
+            201: inline_serializer(
+                name="SalesGoalCreateSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField()
+                }
+            ),
+            400: inline_serializer(
+                name="SalesGoalCreateBadRequestResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "errors": serializers.JSONField()
+                }
+            ),
+            403: inline_serializer(
+                name="SalesGoalCreateForbiddenResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "errors": serializers.CharField()
+                }
+            )
+        },
+        description="Permite al administrador registrar una nueva meta de ventas."
+    )
     def post(self, request, *args, **kwargs):
         if request.profile.role != "ADMIN" and not request.user.is_superuser:
             return Response(
@@ -97,6 +151,22 @@ class SalesGoalDetailView(APIView):
             id=pk, org=request.profile.org
         ).first()
 
+    @extend_schema(
+        tags=["Sales Goals"],
+        operation_id="opportunities_goals_retrieve",
+        responses={
+            200: SalesGoalSerializer,
+            404: inline_serializer(
+                name="SalesGoalDetailNotFoundResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}
+            ),
+            403: inline_serializer(
+                name="SalesGoalDetailForbiddenResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}
+            )
+        },
+        description="Obtiene la información detallada de una meta de ventas específica mediante su ID."
+    )
     def get(self, request, pk, *args, **kwargs):
         goal = self.get_object(pk, request)
         if not goal:
@@ -116,6 +186,26 @@ class SalesGoalDetailView(APIView):
         serializer = SalesGoalSerializer(goal)
         return Response(serializer.data)
 
+    @extend_schema(
+        tags=["Sales Goals"],
+        operation_id="opportunities_goals_update",
+        request=SalesGoalCreateSerializer,
+        responses={
+            200: inline_serializer(
+                name="SalesGoalUpdateSuccessResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            ),
+            400: inline_serializer(
+                name="SalesGoalUpdateBadRequestResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.JSONField()}
+            ),
+            404: inline_serializer(
+                name="SalesGoalUpdateNotFoundResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}
+            )
+        },
+        description="Actualiza de forma parcial o total los parámetros de una meta existente."
+    )
     def put(self, request, pk, *args, **kwargs):
         if request.profile.role != "ADMIN" and not request.user.is_superuser:
             return Response(
@@ -142,6 +232,21 @@ class SalesGoalDetailView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    @extend_schema(
+        tags=["Sales Goals"],
+        operation_id="opportunities_goals_destroy",
+        responses={
+            200: inline_serializer(
+                name="SalesGoalDeleteSuccessResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            ),
+            404: inline_serializer(
+                name="SalesGoalDeleteNotFoundResponse",
+                fields={"error": serializers.BooleanField(), "errors": serializers.CharField()}
+            )
+        },
+        description="Elimina de forma física y definitiva una meta de ventas de la organización."
+    )
     def delete(self, request, pk, *args, **kwargs):
         if request.profile.role != "ADMIN" and not request.user.is_superuser:
             return Response(
@@ -164,6 +269,38 @@ class SalesGoalDetailView(APIView):
 class SalesGoalLeaderboardView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
+    @extend_schema(
+        tags=["Sales Goals"],
+        operation_id="opportunities_goals_leaderboard",
+        parameters=[
+            OpenApiParameter("period_type", str, description="Filtrar tabla por periodo ('MONTHLY', 'WEEKLY', etc.)", required=False),
+        ],
+        responses={
+            200: inline_serializer(
+                name="SalesGoalLeaderboardResponse",
+                fields={
+                    "leaderboard": serializers.ListField(
+                        child=inline_serializer(
+                            name="LeaderboardEntry",
+                            fields={
+                                "goal_id": serializers.CharField(),
+                                "goal_name": serializers.CharField(),
+                                "user": inline_serializer(
+                                    name="LeaderboardUser",
+                                    fields={"id": serializers.CharField(), "name": serializers.CharField(), "email": serializers.CharField()}
+                                ),
+                                "target": serializers.FloatField(),
+                                "achieved": serializers.FloatField(),
+                                "percent": serializers.IntegerField(),
+                                "rank": serializers.IntegerField()
+                            }
+                        )
+                    )
+                }
+            )
+        },
+        description="Genera la tabla de posiciones (Leaderboard) comparando el rendimiento y progreso de los agentes."
+    )
     def get(self, request, *args, **kwargs):
         org = request.profile.org
         today = date.today()

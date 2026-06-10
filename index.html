@@ -171,7 +171,7 @@
     <div class="container">
         <header>
             <h1>Django-CRM</h1>
-            <p>Plataforma CRM moderna para gestión comercial. Centraliza la gestión comercial: organiza clientes y contactos, 
+            <p>Plataforma CRM moderna para gestión comercial. Centraliza la gestión comercial: organiza clientes and contactos, 
                 controla oportunidades de venta, administra casos de soporte, tareas y facturación, todo en una sola plataforma.</p>
         </header>
 
@@ -282,7 +282,7 @@
             <p><strong>DevOps:</strong> Automatización de pruebas, despliegue continuo, monitoreo y mantenimiento.</p>
 
             <h3>Roles y Responsabilidades (Sprint 0)</h3>
-			<h3>Objetivo del Sprint 0 (Planificación): Organización del equipo bajo metodología Scrum, estructuración del Product Backlog inicial y consolidación del setup y fork del repositorio base.</h3>
+            <h3>Objetivo del Sprint 0 (Planificación): Organización del equipo bajo metodología Scrum, estructuración del Product Backlog inicial y consolidación del setup y fork del repositorio base.</h3>
             <table>
                 <thead>
                     <tr>
@@ -321,105 +321,7 @@
             </table>
 
             <h3>Roles y Responsabilidades (Sprint 1):</h3>
-			<h3>Objetivo del Sprint 1 (Análisis): Configuración del entorno de desarrollo en contenedores locales, refinamiento de tareas en GitHub Projects y auditoría detallada de la arquitectura del sistema.</h3>
-			<table>
-				<thead>
-					<tr>
-						<th>Integrante</th>
-						<th>Rol</th>
-						<th>Responsabilidades</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Arce Valencia Anderson Lino</td>
-						<td><strong>Analista de Seguridad</strong></td>
-						<td>[QA-DEBT] Ejecución del diagnóstico de dependencias y escaneo de vulnerabilidades del servidor con la herramienta UV.</td>
-					</tr>
-					<tr>
-						<td>Caracela Challco Anthony Jeffry</td>
-						<td><strong>DevOps Frontend</strong></td>
-						<td>[DEVOPS-CI] Diseño y configuración base de las tareas de validación estática y formato para el cliente SvelteKit.</td>
-					</tr>
-					<tr>
-						<td>Choquehuanca Bedoya Brayan Denilson</td>
-						<td><strong>Líder: Scrum Master</strong></td>
-						<td>[DOC] Gestión del Sprint Backlog, facilitación de ceremonias y automatización de la extracción del esquema de la API (Swagger).</td>
-					</tr>
-					<tr>
-						<td>Condori Caira Antony Beltran</td>
-						<td><strong>Líder Técnico</strong></td>
-						<td>[ENV] Estandarización del entorno de contenedores Docker en Windows 11 y estabilización del script seed_data.</td>
-					</tr>
-					<tr>
-						<td>Cuno Cahuari Armando Steven</td>
-						<td><strong>DevOps Backend</strong></td>
-						<td>[DEVOPS-CI] Definición de la estructura base y linters automatizados para el pipeline de Integración Continua de Django.</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<!-- Sección de Avance Técnico y Backlog del Sprint 1 -->
-			<div style="margin-top: -15px; margin-bottom: 35px;">
-				<h3 style="font-size: 16px; color: #2457ff; margin-bottom: 12px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;">
-					📌 Estado de Ejecución del Sprint Backlog (Sprint 1)
-				</h3>
-				
-				<div class="grid" style="margin-top: 10px;">
-					<!-- Tarea de Antony -->
-					<div class="card" style="border-left: 3px solid #28a745;">
-						<h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
-							✔ Condori Caira Antony Beltran (Entorno de Desarrollo)
-						</h4>
-						<p style="font-size: 13px; color: #555; margin-bottom: 0;">
-							<strong>[ENV] Estandarización de Contenedores en Windows:</strong> Finalizado con éxito. Se adaptó el <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">frontend/Dockerfile</code> con el comando <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">--no-frozen-lockfile</code>, garantizando el despliegue local reproducible mediante <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">docker compose up --build</code> y la inyección de datos de prueba (<code style="background: #eee; padding: 2px 4px; border-radius: 3px;">seed_data</code>).
-						</p>
-					</div>
-
-					<!-- Tarea de Denilson -->
-					<div class="card" style="border-left: 3px solid #28a745;">
-						<h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
-							✔ Choquehuanca Bedoya Brayan Denilson (Extracción Documental)
-						</h4>
-						<p style="font-size: 13px; color: #555; margin-bottom: 0;">
-							<strong>[DOC] Automatización y Exportación de OpenAPI Spec:</strong> Finalizado con éxito. Se configuró y ejecutó de forma nativa la extracción del esquema técnico de la API de Django REST Framework generando el archivo <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">schema.yml</code>, el cual centraliza el catálogo completo de endpoints de los módulos core del CRM.
-						</p>
-					</div>
-
-					<!-- Tarea de Anderson -->
-					<div class="card" style="border-left: 3px solid #28a745;">
-						<h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
-							✔ Arce Valencia Anderson Lino (Análisis de Dependencias)
-						</h4>
-						<p style="font-size: 13px; color: #555; margin-bottom: 0;">
-							<strong>[QA-DEBT] Auditoría Temprana de Librerías con Herramienta UV:</strong> Finalizado con éxito. Se ejecutó la auditoría de dependencias y el escaneo de vulnerabilidades del servidor dentro del contenedor de Django, mapeando la deuda técnica heredada y listando las librerías críticas que requieren actualización.
-						</p>
-					</div>
-
-					<!-- Tarea de Steven (En Progreso) -->
-					<div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
-						<h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
-							⏳ Cuno Cahuari Armando Steven (DevOps Backend)
-						</h4>
-						<p style="font-size: 13px; color: #666; margin-bottom: 0;">
-							<strong>[DEVOPS-CI] Pipeline de Integración Continua del Servidor:</strong> En progreso. Definición de la estructura inicial y los scripts de validación sintáctica del backend. El flujo automatizado para el entorno remoto quedará alineado con el avance del cronograma académico.
-						</p>
-					</div>
-
-					<!-- Tarea de Jeffry (En Progreso) -->
-					<div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
-						<h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
-							⏳ Caracela Challco Anthony Jeffry (DevOps Frontend)
-						</h4>
-						<p style="font-size: 13px; color: #666; margin-bottom: 0;">
-							<strong>[DEVOPS-CI] Tareas de Validación Automatizada del Cliente Web:</strong> En progreso. Diseño base de las tareas de verificación de formato y pruebas estáticas para la interfaz de SvelteKit, quedando pendiente su integración final en la infraestructura del pipeline.
-						</p>
-					</div>
-				</div>
-			</div>
-
-            <h3>Roles y Responsabilidades (Sprint 2)</h3>
-			<h3>Objetivo del Sprint 2 (Implementación): Estabilización técnica del software funcional, automatización de la integración continua (CI/CD) mediante GitHub Actions.</h3>
+            <h3>Objetivo del Sprint 1 (Análisis): Configuración del entorno de desarrollo en contenedores locales, refinamiento de tareas en GitHub Projects y auditoría detallada de la arquitectura del sistema.</h3>
             <table>
                 <thead>
                     <tr>
@@ -430,32 +332,202 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><strong>Arce Valencia Anderson Lino</strong></td>
-                        <td>Analista de Arquitectura</td>
-                        <td>Responsable del levantamiento de información y análisis detallado de la arquitectura general del proyecto (Issue #24).</td>
+                        <td>Arce Valencia Anderson Lino</td>
+                        <td><strong>Analista de Seguridad</strong></td>
+                        <td>[QA-DEBT] Ejecución del diagnóstico de dependencias y escaneo de vulnerabilidades del servidor con la herramienta UV.</td>
                     </tr>
                     <tr>
+                        <td>Caracela Challco Anthony Jeffry</td>
+                        <td><strong>DevOps Frontend</strong></td>
+                        <td>[DEVOPS-CI] Diseño y configuración base de las tareas de validación estática y formato para el cliente SvelteKit.</td>
+                    </tr>
+                    <tr>
+                        <td>Choquehuanca Bedoya Brayan Denilson</td>
+                        <td><strong>Líder: Scrum Master</strong></td>
+                        <td>[DOC] Gestión del Sprint Backlog, facilitación de ceremonias y automatización de la extracción del esquema de la API (Swagger).</td>
+                    </tr>
+                    <tr>
+                        <td>Condori Caira Antony Beltran</td>
+                        <td><strong>Líder Técnico</strong></td>
+                        <td>[ENV] Estandarización del entorno de contenedores Docker en Windows 11 y estabilización del script seed_data.</td>
+                    </tr>
+                    <tr>
+                        <td>Cuno Cahuari Armando Steven</td>
+                        <td><strong>DevOps Backend</strong></td>
+                        <td>[DEVOPS-CI] Definición de la estructura base y linters automatizados para el pipeline de Integración Continua de Django.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="margin-top: -15px; margin-bottom: 35px;">
+                <h3 style="font-size: 16px; color: #2457ff; margin-bottom: 12px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;">
+                    📌 Estado de Ejecución del Sprint Backlog (Sprint 1)
+                </h3>
+                
+                <div class="grid" style="margin-top: 10px;">
+                    <div class="card" style="border-left: 3px solid #28a745;">
+                        <h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
+                            ✔ Condori Caira Antony Beltran (Entorno de Desarrollo)
+                        </h4>
+                        <p style="font-size: 13px; color: #555; margin-bottom: 0;">
+                            <strong>[ENV] Estandarización de Contenedores en Windows:</strong> Finalizado con éxito. Se adaptó el <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">frontend/Dockerfile</code> con el comando <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">--no-frozen-lockfile</code>, garantizando el despliegue local reproducible mediante <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">docker compose up --build</code> y la inyección de datos de prueba (<code style="background: #eee; padding: 2px 4px; border-radius: 3px;">seed_data</code>).
+                        </p>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #28a745;">
+                        <h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
+                            ✔ Choquehuanca Bedoya Brayan Denilson (Extracción Documental)
+                        </h4>
+                        <p style="font-size: 13px; color: #555; margin-bottom: 0;">
+                            <strong>[DOC] Automatización y Exportación de OpenAPI Spec:</strong> Finalizado con éxito. Se configuró y ejecutó de forma nativa la extracción del esquema técnico de la API de Django REST Framework generando el archivo <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">schema.yml</code>, el cual centraliza el catálogo completo de endpoints de los módulos core del CRM.
+                        </p>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #28a745;">
+                        <h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
+                            ✔ Arce Valencia Anderson Lino (Análisis de Dependencias)
+                        </h4>
+                        <p style="font-size: 13px; color: #555; margin-bottom: 0;">
+                            <strong>[QA-DEBT] Auditoría Temprana de Librerías con Herramienta UV:</strong> Finalizado con éxito. Se ejecutó la auditoría de dependencias y el escaneo de vulnerabilidades del servidor dentro del contenedor de Django, mapeando la deuda técnica heredada y listando las librerías críticas que requieren actualización.
+                        </p>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+                        <h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+                            ⏳ Cuno Cahuari Armando Steven (DevOps Backend)
+                        </h4>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 0;">
+                            <strong>[DEVOPS-CI] Pipeline de Integración Continua del Servidor:</strong> En progreso. Definición de la estructura inicial y los scripts de validación sintáctica del backend. El flujo automatizado para el entorno remoto quedará alineado con el avance del cronograma académico.
+                        </p>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+                        <h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+                            ⏳ Caracela Challco Anthony Jeffry (DevOps Frontend)
+                        </h4>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 0;">
+                            <strong>[DEVOPS-CI] Tareas de Validación Automatizada del Cliente Web:</strong> En progreso. Diseño base de las tareas de verificación de formato y pruebas estáticas para la interfaz de SvelteKit, quedando pendiente su integration final en la infraestructura del pipeline.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Roles y Responsabilidades (Sprint 2 - Sprint Actual)</h3>
+            <h3>Objetivo del Sprint 2 (Implementación): Estabilización técnica del software funcional, aislamiento estricto de entornos multi-tenant (PostgreSQL RLS) y despliegue del pipeline automatizado de integración y documentación (GitHub Pages).</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Integrante</th>
+                        <th>Rol</th>
+                        <th>Responsabilidades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
                         <td><strong>Condori Caira Antony Beltran</strong></td>
-                        <td>Líder Técnico</td>
-                        <td>Encargado del análisis y revisión estructural detallada del backend de Django (Issue #23).</td>
+                        <td>Líder Técnico / Backend Engineer</td>
+                        <td>Responsable de analizar, reestructurar y solventar los problemas de conectividad de red interna de Docker. Encargado de la estabilización del entorno de contenedores del backend y la inicialización limpia del Superusuario administrativo (Issue #23).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Arce Valencia Anderson Lino</strong></td>
+                        <td>Lider: Scrum Master</td>
+                        <td>Responsable del levantamiento de información de alto nivel, mapeo estructural de componentes core (SvelteKit, Django, PostgreSQL RLS, Redis/Celery) y documentación del flujo transaccional seguro entre servicios (Issue #24).</td>
                     </tr>
                     <tr>
                         <td><strong>Caracela Challco Anthony Jeffry</strong></td>
-                        <td>Especialista Funcional</td>
-                        <td>Responsable de analizar los flujos técnicos y funcionales para la redacción de la Guía de Usuario (Issue #22).</td>
+                        <td>Diseñador Funcional / Documentador</td>
+                        <td>Responsable de analizar la lógica de negocio operativa del CRM y confeccionar la Guía de Usuario inicial en formato Markdown para su consumo en la Wiki del proyecto (Issue #22).</td>
                     </tr>
                     <tr>
                         <td><strong>Choquehuanca Bedoya Brayan Denilson</strong></td>
-                        <td>QA Tester</td>
-                        <td>Encargado del diseño de la suite de testing automatizado y pruebas de regresión en el pipeline (Issue #21).</td>
+                        <td>Tester</td>
+                        <td>Encargado de planificar, diseñar y acoplar la suite de pruebas automatizadas en el pipeline de CI/CD, asegurando la verificación de aislamiento y exclusividad Multi-Tenant (RLS tests) en la base de datos (Issue #21).</td>
                     </tr>
                     <tr>
                         <td><strong>Cuno Cahuari Armando Steven</strong></td>
                         <td>DevOps Engineer</td>
-                        <td>Responsable de la automatización documental y despliegue del flujo técnico en GitHub Pages (Issue #20).</td>
+                        <td>Responsable de configurar las acciones y scripts de automatización del pipeline para desplegar el portal interactivo de documentación técnica sobre GitHub Pages (Issue #20).</td>
                     </tr>
                 </tbody>
             </table>
+
+            <div style="margin-top: -15px; margin-bottom: 35px;">
+                <h3 style="font-size: 16px; color: #2457ff; margin-bottom: 12px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;">
+                    📌 Estado de Ejecución del Sprint Backlog (Sprint 2)
+                </h3>
+                
+                <div class="grid" style="margin-top: 10px;">
+                    <div class="card" style="border-left: 3px solid #28a745;">
+                        <h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
+                            ✔ Condori Caira Antony Beltran (Backend & Infraestructura)
+                        </h4>
+                        <p style="font-size: 13px; color: #555; margin-bottom: 6px;">
+                            <strong>[ENV] Configuración de Docker e Inicialización de Entorno:</strong> Finalizado con éxito. Se corrigieron los puentes de red locales en los contenedores y se habilitaron las herramientas interactivas del backend, permitiendo la creación del perfil de superusuario administrador.
+                        </p>
+                        <div class="tag-list">
+                            <span class="tag" style="background: #eef3ff; color: #2742a8;">#23</span>
+                            <span class="tag" style="background: #d4edda; color: #155724;">Done</span>
+                            <span class="tag" style="background: #f8d7da; color: #721c24;">Alta Prioridad</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+                        <h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+                            ⏳ Arce Valencia Anderson Lino (Arquitectura de Software)
+                        </h4>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 6px;">
+                            <strong>[ANÁLISIS] Levantamiento de la Arquitectura General:</strong> En progreso. Se estructuró el mapa de bloques que integra el servidor SvelteKit, la API REST en Django y PostgreSQL 16 con políticas de aislamiento Row-Level Security. En proceso de redacción final en la Wiki.
+                        </p>
+                        <div class="tag-list">
+                            <span class="tag" style="background: #eef3ff; color: #2742a8;">#24</span>
+                            <span class="tag" style="background: #fff3cd; color: #856404;">In Progress</span>
+                            <span class="tag" style="background: #e2e3e5; color: #383d41;">Media</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+                        <h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+                            ⏳ Caracela Challco Anthony Jeffry (Documentación Funcional)
+                        </h4>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 6px;">
+                            <strong>[DOC] Redacción de la Guía de Usuario en Markdown:</strong> En progreso. Análisis de los módulos core del CRM (Leads, Cuentas, Contactos) para el desarrollo estructurado de los manuales en Markdown orientados a los asesores comerciales de los Tenants.
+                        </p>
+                        <div class="tag-list">
+                            <span class="tag" style="background: #eef3ff; color: #2742a8;">#22</span>
+                            <span class="tag" style="background: #fff3cd; color: #856404;">In Progress</span>
+                            <span class="tag" style="background: #e2e3e5; color: #383d41;">Media</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+                        <h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+                            ⏳ Choquehuanca Bedoya Brayan Denilson (Automatización QA)
+                        </h4>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 6px;">
+                            <strong>[DEVOPS-CI] Pruebas Unitarias de Aislamiento RLS:</strong> En progreso. Diseño técnico de la suite de testing para inyectar transacciones concurrentes desde múltiples organizaciones con el fin de validar que las reglas de PostgreSQL bloqueen fugas de datos.
+                        </p>
+                        <div class="tag-list">
+                            <span class="tag" style="background: #eef3ff; color: #2742a8;">#21</span>
+                            <span class="tag" style="background: #fff3cd; color: #856404;">In Progress</span>
+                            <span class="tag" style="background: #f8d7da; color: #721c24;">Alta Prioridad</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+                        <h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+                            ⏳ Cuno Cahuari Armando Steven (DevOps & Git)
+                        </h4>
+                        <p style="font-size: 13px; color: #666; margin-bottom: 6px;">
+                            <strong>[DEVOPS-CD] Automatización de Despliegue en GitHub Pages:</strong> En progreso. Configuración inicial de los Workflows de integración de GitHub Actions para disparar la compilación estática del portal documental ante cualquier actualización de la documentación.
+                        </p>
+                        <div class="tag-list">
+                            <span class="tag" style="background: #eef3ff; color: #2742a8;">#20</span>
+                            <span class="tag" style="background: #fff3cd; color: #856404;">In Progress</span>
+                            <span class="tag" style="background: #e2e3e5; color: #383d41;">Baja</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <h3>Roles y Responsabilidades (Sprint 3)</h3>
             <table>

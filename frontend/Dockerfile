@@ -8,7 +8,7 @@ WORKDIR /app
 # Install dependencies (layer cached)
 COPY package.json pnpm-lock.yaml* ./
 ENV CI=true
-RUN pnpm config set ignore-scripts false && pnpm install --frozen-lockfile || true
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
 
 EXPOSE 5173
 

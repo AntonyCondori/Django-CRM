@@ -1,0 +1,1 @@
+{"version":3,"file":"serverRoute.d.ts","sourceRoot":"","sources":["../../../src/server-common/serverRoute.ts"],"names":[],"mappings":"AAOA,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,eAAe,CAAC;AAKlD;;;;;;;;;;;;;;;;;;;;;GAqBG;AACH,wBAAgB,yBAAyB,CAAC,CAAC,SAAS,YAAY,EAC9D,oBAAoB,EAAE,CAAC,OAAO,EAAE,CAAC,KAAK,OAAO,CAAC,QAAQ,CAAC,GACtD,CAAC,YAAY,EAAE,CAAC,KAAK,OAAO,CAAC,QAAQ,CAAC,CAmCxC"}

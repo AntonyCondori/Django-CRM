@@ -1,0 +1,27 @@
+function isCloudflareClass(value, className) {
+  if (!value || typeof value !== 'function') {
+    return false;
+  }
+
+  if (value.name === className) {
+    return false;
+  }
+
+  let proto = value.prototype;
+
+  while (proto) {
+    const ctor = (proto ).constructor;
+    const constructorName = ctor?.name;
+
+    if (constructorName === className) {
+      return true;
+    }
+
+    proto = Object.getPrototypeOf(proto);
+  }
+
+  return false;
+}
+
+export { isCloudflareClass };
+//# sourceMappingURL=isCloudflareClass.js.map

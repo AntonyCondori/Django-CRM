@@ -1,0 +1,193 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const core = require('@sentry/core');
+const async = require('./async.js');
+const instrument = require('./instrument.js');
+const instrumentEnv = require('./instrumentations/worker/instrumentEnv.js');
+const options = require('./options.js');
+const request = require('./request.js');
+const instrumentContext = require('./utils/instrumentContext.js');
+const rpcOptions = require('./utils/rpcOptions.js');
+const wrapMethodWithSentry = require('./wrapMethodWithSentry.js');
+
+/* eslint-disable @typescript-eslint/unbound-method */
+
+const BUILT_IN_DO_METHODS = new Set([
+  'constructor',
+  'fetch',
+  'alarm',
+  'webSocketError',
+  'webSocketClose',
+  'webSocketMessage',
+]);
+
+/**
+ * Instruments a Durable Object class to capture errors and performance data.
+ *
+ * Instruments the following methods by default:
+ * - fetch
+ * - alarm
+ * - webSocketMessage
+ * - webSocketClose
+ * - webSocketError
+ *
+ * To instrument RPC methods (prototype methods), enable the `enableRpcTracePropagation` option.
+ *
+ * @param optionsCallback Function that returns the options for the SDK initialization.
+ * @param DurableObjectClass The Durable Object class to instrument.
+ * @returns The instrumented Durable Object class.
+ *
+ * @example
+ * ```ts
+ * class MyDurableObjectBase extends DurableObject {
+ *   constructor(ctx: DurableObjectState, env: Env) {
+ *     super(ctx, env);
+ *   }
+ * }
+ *
+ * export const MyDurableObject = instrumentDurableObjectWithSentry(
+ *   env => ({
+ *     dsn: env.SENTRY_DSN,
+ *     tracesSampleRate: 1.0,
+ *   }),
+ *   MyDurableObjectBase,
+ * );
+ * ```
+ */
+function instrumentDurableObjectWithSentry
+
+(optionsCallback, DurableObjectClass) {
+  return new Proxy(DurableObjectClass, {
+    construct(target, [ctx, env]) {
+      async.setAsyncLocalStorageAsyncContextStrategy();
+      const context = instrumentContext.instrumentContext(ctx);
+      const options$1 = options.getFinalOptions(optionsCallback(env), env);
+      const instrumentedEnv = instrumentEnv.instrumentEnv(env, options$1);
+
+      const obj = new target(context, instrumentedEnv);
+
+      // These are the methods that are available on a Durable Object
+      // ref: https://developers.cloudflare.com/durable-objects/api/base/
+      // obj.alarm
+      // obj.fetch
+      // obj.webSocketError
+      // obj.webSocketClose
+      // obj.webSocketMessage
+
+      // Any other public methods on the Durable Object instance are RPC calls.
+
+      if (obj.fetch && typeof obj.fetch === 'function') {
+        obj.fetch = instrument.ensureInstrumented(
+          obj.fetch,
+          original =>
+            new Proxy(original, {
+              apply(target, thisArg, args) {
+                return request.wrapRequestHandler({ options: options$1, request: args[0], context }, () => {
+                  return Reflect.apply(target, thisArg, args);
+                });
+              },
+            }),
+        );
+      }
+
+      if (obj.alarm && typeof obj.alarm === 'function') {
+        // Alarms are independent invocations, so we start a new trace and link to the previous alarm
+        obj.alarm = wrapMethodWithSentry.wrapMethodWithSentry(
+          { options: options$1, context, spanName: 'alarm', spanOp: 'function', startNewTrace: true },
+          obj.alarm,
+        );
+      }
+
+      if (obj.webSocketMessage && typeof obj.webSocketMessage === 'function') {
+        obj.webSocketMessage = wrapMethodWithSentry.wrapMethodWithSentry(
+          { options: options$1, context, spanName: 'webSocketMessage' },
+          obj.webSocketMessage,
+        );
+      }
+
+      if (obj.webSocketClose && typeof obj.webSocketClose === 'function') {
+        obj.webSocketClose = wrapMethodWithSentry.wrapMethodWithSentry({ options: options$1, context, spanName: 'webSocketClose' }, obj.webSocketClose);
+      }
+
+      if (obj.webSocketError && typeof obj.webSocketError === 'function') {
+        obj.webSocketError = wrapMethodWithSentry.wrapMethodWithSentry(
+          { options: options$1, context, spanName: 'webSocketError' },
+          obj.webSocketError,
+          (_, error) =>
+            core.captureException(error, {
+              mechanism: {
+                type: 'auto.faas.cloudflare.durable_object_websocket',
+                handled: false,
+              },
+            }),
+        );
+      }
+
+      // Get effective RPC propagation setting (handles deprecation of instrumentPrototypeMethods)
+      const rpcPropagation = rpcOptions.getEffectiveRpcPropagation(options$1);
+
+      // Skip RPC instrumentation if not enabled
+      if (!rpcPropagation) {
+        return obj;
+      }
+
+      // If `instrumentPrototypeMethods` was passed as an array (deprecated),
+      // only the listed method names should be instrumented.
+      const instrumentPrototypeMethods = Array.isArray(options$1.instrumentPrototypeMethods)
+        ? options$1.instrumentPrototypeMethods
+        : undefined;
+      const allowSet = instrumentPrototypeMethods ? new Set(instrumentPrototypeMethods) : null;
+
+      // Return a Proxy that lazily wraps prototype methods on access.
+      // This avoids iterating the prototype chain at construction time —
+      // we only check if a property is an RPC method when it's accessed.
+      const rpcMethodCache = new Map();
+
+      return new Proxy(obj, {
+        get(proxyTarget, prop, receiver) {
+          const value = Reflect.get(proxyTarget, prop, receiver);
+
+          if (typeof prop !== 'string' || BUILT_IN_DO_METHODS.has(prop)) {
+            return value;
+          }
+
+          const cached = rpcMethodCache.get(prop);
+
+          if (cached) {
+            return cached;
+          }
+
+          if (
+            typeof value !== 'function' ||
+            Object.prototype.hasOwnProperty.call(proxyTarget, prop) ||
+            (allowSet && !allowSet.has(prop)) ||
+            // Exclude inherited Object.prototype methods (toString, valueOf, etc.)
+            // These are not RPC methods and should not create spans
+            prop in Object.prototype
+          ) {
+            return value;
+          }
+
+          // Bind the method to the original object to ensure private fields work correctly.
+          // When called via the Proxy, `this` would be the Proxy, but private fields require
+          // the original object. Bound functions ignore the thisArg passed via Reflect.apply.
+          const boundValue = (value ).bind(proxyTarget);
+
+          const wrapped = wrapMethodWithSentry.wrapMethodWithSentry(
+            { options: options$1, context, spanName: prop, spanOp: 'rpc' },
+            boundValue,
+            undefined,
+            true,
+          );
+
+          rpcMethodCache.set(prop, wrapped);
+
+          return wrapped;
+        },
+      });
+    },
+  });
+}
+
+exports.instrumentDurableObjectWithSentry = instrumentDurableObjectWithSentry;
+//# sourceMappingURL=durableobject.js.map

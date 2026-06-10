@@ -1,654 +1,637 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Django-CRM | Presentación</title>
-	<meta name="description" content="Presentación de Django-CRM - Proyecto Scrum y DevOps" />
-	<style>
-		* {
-			margin: 0;
-			padding: 0;
-			box-sizing: border-box;
-		}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Django-CRM | Presentación Sprint 2</title>
+    <meta name="description" content="Presentación de Django-CRM - Proyecto Scrum y DevOps" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-		body {
-			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-			color: #333;
-			background: #f9f9f9;
-			line-height: 1.6;
-		}
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #333;
+            background: #f9f9f9;
+            line-height: 1.6;
+        }
 
-		.container {
-			max-width: 1000px;
-			margin: 0 auto;
-			padding: 0 20px;
-		}
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
 
-		header {
-			background: white;
-			padding: 30px 0;
-			border-bottom: 1px solid #ddd;
-			margin-bottom: 30px;
-		}
+        header {
+            background: white;
+            padding: 30px 0;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 30px;
+        }
 
-		header h1 {
-			font-size: 28px;
-			color: #2457ff;
-			margin-bottom: 8px;
-		}
+        header h1 {
+            font-size: 28px;
+            color: #2457ff;
+            margin-bottom: 8px;
+        }
 
-		header p {
-			color: #666;
-		}
+        header p {
+            color: #666;
+        }
 
-		section {
-			background: white;
-			margin-bottom: 20px;
-			padding: 25px;
-			border-radius: 8px;
-			border-left: 4px solid #2457ff;
-		}
+        section {
+            background: white;
+            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 8px;
+            border-left: 4px solid #2457ff;
+        }
 
-		h2 {
-			font-size: 22px;
-			color: #2457ff;
-			margin-bottom: 15px;
-		}
+        h2 {
+            font-size: 22px;
+            color: #2457ff;
+            margin-bottom: 15px;
+        }
 
-		h3 {
-			font-size: 16px;
-			margin-top: 15px;
-			margin-bottom: 10px;
-		}
+        h3 {
+            font-size: 16px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
 
-		p {
-			color: #555;
-			margin-bottom: 12px;
-		}
+        p {
+            color: #555;
+            margin-bottom: 12px;
+        }
 
-		ul, ol {
-			margin-left: 20px;
-		}
+        ul, ol {
+            margin-left: 20px;
+        }
 
-		li {
-			margin-bottom: 8px;
-		}
+        li {
+            margin-bottom: 8px;
+        }
 
-		/* Estilos para las Tablas de Roles */
-		table {
-			width: 100%;
-			border-collapse: collapse;
-			margin-top: 15px;
-			margin-bottom: 30px;
-			font-size: 14px;
-		}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
 
-		th {
-			background-color: #0d1117;
-			color: white;
-			text-align: left;
-			padding: 12px;
-			border: 1px solid #ddd;
-		}
+        th {
+            background-color: #0d1117;
+            color: white;
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
 
-		td {
-			padding: 12px;
-			border: 1px solid #ddd;
-			vertical-align: top;
-		}
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            vertical-align: top;
+        }
 
-		tr:nth-child(even) {
-			background-color: #fcfcfc;
-		}
+        tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
 
-		.grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-			gap: 15px;
-			margin-top: 15px;
-		}
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
 
-		.card {
-			background: #f5f5f5;
-			padding: 15px;
-			border-radius: 6px;
-			border: 1px solid #ddd;
-		}
+        .card {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
 
-		.card h3 {
-			color: #2457ff;
-		}
+        .card h3 {
+            color: #2457ff;
+        }
 
-		.tag-list {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 8px;
-			margin-top: 12px;
-		}
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
 
-		.tag {
-			display: inline-block;
-			background: #eef3ff;
-			color: #2742a8;
-			padding: 5px 12px;
-			border-radius: 20px;
-			font-size: 12px;
-			font-weight: 600;
-		}
+        .tag {
+            display: inline-block;
+            background: #eef3ff;
+            color: #2742a8;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
 
-		.team-list {
-			list-style: none;
-		}
+        .team-list {
+            list-style: none;
+        }
 
-		.team-item {
-			padding: 12px 0;
-			border-bottom: 1px solid #ddd;
-		}
+        .team-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #ddd;
+        }
 
-		.team-item:last-child {
-			border-bottom: none;
-		}
+        .team-item:last-child {
+            border-bottom: none;
+        }
 
-		.team-item strong {
-			color: #2457ff;
-		}
+        .team-item strong {
+            color: #2457ff;
+        }
 
-		footer {
-			text-align: center;
-			padding: 20px;
-			color: #999;
-			font-size: 13px;
-		}
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 13px;
+        }
 
-		@media (max-width: 768px) {
-			.grid {
-				grid-template-columns: 1fr;
-			}
-		}
-	</style>
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-	<div class="container">
-		<header>
-			<h1>Django-CRM</h1>
-			<p>Plataforma CRM moderna para gestión comercial. centraliza la gestión comercial: organiza clientes y contactos, 
-				controla oportunidades de venta, administra casos de soporte, tareas y facturación, todo en una sola plataforma.</p>
-		</header>
+    <div class="container">
+        <header>
+            <h1>Django-CRM</h1>
+            <p>Plataforma CRM moderna para gestión comercial. Centraliza la gestión comercial: organiza clientes y contactos, 
+                controla oportunidades de venta, administra casos de soporte, tareas y facturación, todo en una sola plataforma.</p>
+        </header>
 
-		<section>
-			<h2>1. Objetivo del proyecto</h2>
-			<p>
-				Identificar el producto base y revisar su estado actual desde una mirada técnica y funcional. Establecer un plan inicial de trabajo 
-				con Scrum, definiendo 
-				hitos y entregables. Justificar la viabilidad técnica y legal del proyecto para uso académico.
-				Preparar el contexto para proponer mejoras en sprints posteriores. Alineación futura en el trabajo con prácticas DevOps como despliegue y 
-				automatización básica.
+        <section>
+            <h2>1. Objetivo del proyecto</h2>
+            <p>
+                Identificar el producto base y revisar su estado actual desde una mirada técnica y funcional. Establecer un plan inicial de trabajo 
+                con Scrum, definiendo hitos y entregables. Justificar la viabilidad técnica y legal del proyecto para uso académico.
+                Preparar el contexto para proponer mejoras en sprints posteriores. Alineación futura en el trabajo con prácticas DevOps como despliegue y 
+                automatización básica.
+            </p>
+        </section>
 
-			</p>
-		</section>
+        <section>
+            <h2>2. Software seleccionado: Django-CRM</h2>
+            <h3>Información del software seleccionado</h3>
+            <ul>
+                <li><strong>Nombre del Producto:</strong> BottleCRM (Open Source) - Django-CRM</li>
+                <li><strong>Repositorio:</strong> <a href="https://github.com/AntonyCondori/Django-CRM" target="_blank" rel="noreferrer">https://github.com/AntonyCondori/Django-CRM</a></li>
+                <li><strong>Dominio:</strong> Sistema CRM para gestión comercial integral, con ventas, soporte y facturación.</li>
+                <li><strong>Complejidad:</strong> Media-alta. Plataforma full-stack con 7 módulos y arquitectura multi-tenant con PostgreSQL RLS.</li>
+                <li><strong>Viabilidad Técnica y Legal:</strong> Licencia MIT, stack Django 5.x + SvelteKit 2.x, Docker Compose, PostgreSQL RLS y Redis.</li>
+            </ul>
 
-		<section>
-			<h2>2. Software seleccionado: Django-CRM</h2>
-			<h3>Información del software seleccionado</h3>
-			<ul>
-				<li><strong>Nombre del Producto:</strong> BottleCRM (Open Source) - Django-CRM</li>
-				<li><strong>Repositorio:</strong> <a href="https://github.com/AntonyCondori/Django-CRM" target="_blank" rel="noreferrer">https://github.com/AntonyCondori/Django-CRM</a></li>
-				<li><strong>Dominio:</strong> Sistema CRM para gestión comercial integral, con ventas, soporte y facturación.</li>
-				<li><strong>Complejidad:</strong> Media-alta. Plataforma full-stack con 7 módulos y arquitectura multi-tenant con PostgreSQL RLS.</li>
-				<li><strong>Viabilidad Técnica y Legal:</strong> Licencia MIT, stack Django 5.x + SvelteKit 2.x, Docker Compose, PostgreSQL RLS y Redis.</li>
-			</ul>
+            <h3>Descripción general</h3>
+            <p>
+                Django-CRM es una plataforma CRM open source diseñada para startups y pequeñas empresas. 
+                Combina un backend robusto basado en Django REST Framework con una interfaz moderna en SvelteKit.
+            </p>
+            
+            <h3>Módulos principales</h3>
+            <ul>
+                <li><strong>Leads:</strong> Seguimiento de prospectos en el ciclo de ventas</li>
+                <li><strong>Cuentas:</strong> Administración de empresas y organizaciones clientes</li>
+                <li><strong>Contactos:</strong> Gestión de personas y datos de contacto</li>
+                <li><strong>Oportunidades:</strong> Seguimiento de deals y negociaciones</li>
+                <li><strong>Casos:</strong> Gestión de soporte y atención al cliente</li>
+                <li><strong>Tareas:</strong> Planificación, kanban y calendario</li>
+                <li><strong>Invoices:</strong> Generación y gestión de facturas</li>
+            </ul>
 
-			<h3>Descripción general</h3>
-			<p>
-				Django-CRM es una plataforma CRM open source diseñada para startups y pequeñas empresas. 
-				Combina un backend robusto basado en Django REST Framework con una interfaz moderna en SvelteKit.
-			</p>
-			
-			<h3>Módulos principales</h3>
-			<ul>
-				<li><strong>Leads:</strong> Seguimiento de prospectos en el ciclo de ventas</li>
-				<li><strong>Cuentas:</strong> Administración de empresas y organizaciones clientes</li>
-				<li><strong>Contactos:</strong> Gestión de personas y datos de contacto</li>
-				<li><strong>Oportunidades:</strong> Seguimiento de deals y negociaciones</li>
-				<li><strong>Casos:</strong> Gestión de soporte y atención al cliente</li>
-				<li><strong>Tareas:</strong> Planificación, kanban y calendario</li>
-				<li><strong>Invoices:</strong> Generación y gestión de facturas</li>
-			</ul>
+            <h3>Ventajas diferenciales</h3>
+            <ul>
+                <li><strong>Multi-tenant con RLS:</strong> Cada organización tiene datos completamente aislados a nivel de base de datos</li>
+                <li><strong>Seguridad:</strong> Autenticación JWT, gestión de permisos por equipos</li>
+                <li><strong>Automatización:</strong> Tareas en segundo plano (Celery), integración con AWS SES para correos</li>
+                <li><strong>Escalabilidad:</strong> Redis para caché, arquitectura preparada para producción</li>
+            </ul>
 
-			<h3>Ventajas diferenciales</h3>
-			<ul>
-				<li><strong>Multi-tenant con RLS:</strong> Cada organización tiene datos completamente aislados a nivel de base de datos</li>
-				<li><strong>Seguridad:</strong> Autenticación JWT, gestión de permisos por equipos</li>
-				<li><strong>Automatización:</strong> Tareas en segundo plano (Celery), integración con AWS SES para correos</li>
-				<li><strong>Escalabilidad:</strong> Redis para caché, arquitectura preparada para producción</li>
-			</ul>
+            <div class="tag-list">
+                <span class="tag">Open Source</span>
+                <span class="tag">Multi-tenant</span>
+                <span class="tag">Seguro</span>
+                <span class="tag">Escalable</span>
+                <span class="tag">Automatizado</span>
+            </div>
+        </section>
 
-			<div class="tag-list">
-				<span class="tag">Open Source</span>
-				<span class="tag">Multi-tenant</span>
-				<span class="tag">Seguro</span>
-				<span class="tag">Escalable</span>
-				<span class="tag">Automatizado</span>
-			</div>
-		</section>
+        <section>
+            <h2>3. Tecnologías principales</h2>
+            
+            <h3>Backend</h3>
+            <p>Django 5.x, Django REST Framework, PostgreSQL con Row-Level Security, JWT, Celery, Redis</p>
+            
+            <h3>Frontend</h3>
+            <p>SvelteKit 2.x, Svelte 5, TailwindCSS 4, shadcn-svelte, Lucide icons</p>
+            
+            <h3>Infraestructura</h3>
+            <p>Docker, AWS S3 (archivos), AWS SES (correos), PostgreSQL, Redis</p>
 
-		<section>
-			<h2>3. Tecnologías principales</h2>
-			
-			<h3>Backend</h3>
-			<p>Django 5.x, Django REST Framework, PostgreSQL con Row-Level Security, JWT, Celery, Redis</p>
-			
-			<h3>Frontend</h3>
-			<p>SvelteKit 2.x, Svelte 5, TailwindCSS 4, shadcn-svelte, Lucide icons</p>
-			
-			<h3>Infraestructura</h3>
-			<p>Docker, AWS S3 (archivos), AWS SES (correos), PostgreSQL, Redis</p>
+            <div class="grid">
+                <div class="card">
+                    <h3>Backend</h3>
+                    <p>API REST robusta con autenticación JWT, manejo de datos complejos y permisos granulares</p>
+                </div>
+                <div class="card">
+                    <h3>Frontend</h3>
+                    <p>Interfaz moderna y responsive con componentes reutilizables y experiencia fluida</p>
+                </div>
+                <div class="card">
+                    <h3>Base de datos</h3>
+                    <p>PostgreSQL con RLS para aislamiento de datos por organización a nivel de BD</p>
+                </div>
+                <div class="card">
+                    <h3>Tareas asincrónicas</h3>
+                    <p>Celery + Redis para envío de correos, reportes y procesamiento en background</p>
+                </div>
+            </div>
+        </section>
 
-			<div class="grid">
-				<div class="card">
-					<h3>Backend</h3>
-					<p>API REST robusta con autenticación JWT, manejo de datos complejos y permisos granulares</p>
-				</div>
-				<div class="card">
-					<h3>Frontend</h3>
-					<p>Interfaz moderna y responsive con componentes reutilizables y experiencia fluida</p>
-				</div>
-				<div class="card">
-					<h3>Base de datos</h3>
-					<p>PostgreSQL con RLS para aislamiento de datos por organización a nivel de BD</p>
-				</div>
-				<div class="card">
-					<h3>Tareas asincrónicas</h3>
-					<p>Celery + Redis para envío de correos, reportes y procesamiento en background</p>
-				</div>
-			</div>
-		</section>
+        <section>
+            <h2>4. Equipo de trabajo</h2>
+            <p>
+                Equipo conformado por 5 integrantes comprometidos con la implementación del proyecto 
+                utilizando metodología Scrum y prácticas DevOps.
+            </p>
+            
+            <ul class="team-list">
+                <li class="team-item"><strong>Arce Valencia Anderson Lino</strong></li>
+                <li class="team-item"><strong>Caracela Challco Anthony Jeffry</strong></li>
+                <li class="team-item"><strong>Choquehuanca Bedoya Brayan Denilson</strong></li>
+                <li class="team-item"><strong>Condori Caira Antony Beltran</strong></li>
+                <li class="team-item"><strong>Cuno Cahuari Armando Steven</strong></li>
+            </ul>
 
-		<section>
-			<h2>4. Equipo de trabajo</h2>
-			<p>
-				Equipo conformado por 5 integrantes comprometidos con la implementación del proyecto 
-				utilizando metodología Scrum y prácticas DevOps.
-			</p>
-			
-			<ul class="team-list">
-				<li class="team-item">
-					<strong>Arce Valencia Anderson Lino</strong>
-				</li>
-				<li class="team-item">
-					<strong>Caracela Challco Anthony Jeffry</strong>
-				</li>
-				<li class="team-item">
-					<strong>Choquehuanca Bedoya Brayan Denilson</strong>
-				</li>
-				<li class="team-item">
-					<strong>Condori Caira Antony Beltran</strong>
-				</li>
-				<li class="team-item">
-					<strong>Cuno Cahuari Armando Steven</strong>
-				</li>
-			</ul>
+            <h3>Metodología</h3>
+            <p><strong>Scrum:</strong> Organización del trabajo en sprints, revisiones frecuentes y entrega iterativa de valor.</p>
+            <p><strong>DevOps:</strong> Automatización de pruebas, despliegue continuo, monitoreo y mantenimiento.</p>
 
-			<h3>Metodología</h3>
-			<p>
-				<strong>Scrum:</strong> Organización del trabajo en sprints, revisiones frecuentes y entrega iterativa de valor.
-			</p>
-			<p>
-				<strong>DevOps:</strong> Automatización de pruebas, despliegue continuo, monitoreo y mantenimiento.
-			</p>
+            <h3>Roles y Responsabilidades (Sprint 0)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Integrante</th>
+                        <th>Rol</th>
+                        <th>Responsabilidades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Condori Caira Antony Beltran</strong></td>
+                        <td>Líder</td>
+                        <td>Coordinación general, ejecución del Fork, configuración de herramientas GitHub y despliegue inicial.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Arce Valencia Anderson Lino</strong></td>
+                        <td>Verificación Técnica</td>
+                        <td>Validación de docker-compose.yml, conteo de KLOC (>10K) y cumplimiento de licencia MIT.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Caracela Challco Anthony Jeffry</strong></td>
+                        <td>Cronograma Maestro</td>
+                        <td>Planificación de los Sprints de 15 días alineados a los hitos del curso y rotación de líderes.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cuno Cahuari Armando Steven</strong></td>
+                        <td>Estándares y Formato</td>
+                        <td>Manual de convivencia, documentación del stack tecnológico y estructura del artículo IEEE.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Choquehuanca Bedoya Brayan Denilson</strong></td>
+                        <td>Documentación Web</td>
+                        <td>Creación y mantenimiento del portal de documentación en GitHub Pages.</td>
+                    </tr>
+                </tbody>
+            </table>
 
-			<h3>Roles y Responsabilidades (Sprint 0)</h3>
-			<table>
-				<thead>
-					<tr>
-						<th>Integrante</th>
-						<th>Rol</th>
-						<th>Responsabilidades</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td><strong>Condori Caira Antony Beltran</strong></td>
-						<td>Líder</td>
-						<td>Coordinación general, ejecución del Fork, configuración de herramientas GitHub y despliegue inicial.</td>
-					</tr>
-					<tr>
-						<td><strong>Arce Valencia Anderson Lino</strong></td>
-						<td>Verificación Técnica</td>
-						<td>Validación de docker-compose.yml, conteo de KLOC (>10K) y cumplimiento de licencia MIT.</td>
-					</tr>
-					<tr>
-						<td><strong>Caracela Challco Anthony Jeffry</strong></td>
-						<td>Cronograma Maestro</td>
-						<td>Planificación de los Sprints de 15 días alineados a los hitos del curso y rotación de líderes.</td>
-					</tr>
-					<tr>
-						<td><strong>Cuno Cahuari Armando Steven</strong></td>
-						<td>Estándares y Formato</td>
-						<td>Manual de convivencia, documentación del stack tecnológico y estructura del artículo IEEE.</td>
-					</tr>
-					<tr>
-						<td><strong>Choquehuanca Bedoya Brayan Denilson</strong></td>
-						<td>Documentación Web</td>
-						<td>Creación y mantenimiento del portal de documentación en GitHub Pages.</td>
-					</tr>
-				</tbody>
-			</table>
+            <h3>Roles y Responsabilidades (Sprint 1)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Integrante</th>
+                        <th>Rol</th>
+                        <th>Responsabilidades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Arce Valencia Anderson Lino</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Caracela Challco Anthony Jeffry</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Choquehuanca Bedoya Brayan Denilson</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Condori Caira Antony Beltran</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Cuno Cahuari Armando Steven</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
 
-			<h3>Roles y Responsabilidades (Sprint 1):</h3>
-			<table>
-				<thead>
-					<tr>
-						<th>Integrante</th>
-						<th>Rol</th>
-						<th>Responsabilidades</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Arce Valencia Anderson Lino</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Caracela Challco Anthony Jeffry</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Choquehuanca Bedoya Brayan Denilson</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Condori Caira Antony Beltran</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Cuno Cahuari Armando Steven</td>
-						<td></td>
-						<td></td>
-					</tr>
-				</tbody>
-			</table>
+            <h3>Roles y Responsabilidades (Sprint 2 - Sprint Actual)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Integrante</th>
+                        <th>Rol</th>
+                        <th>Responsabilidades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Arce Valencia Anderson Lino</strong></td>
+                        <td>Analista de Arquitectura</td>
+                        <td>Responsable del levantamiento de información y análisis detallado de la arquitectura general del proyecto (Issue #24).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Condori Caira Antony Beltran</strong></td>
+                        <td>Líder Técnico</td>
+                        <td>Encargado del análisis y revisión estructural detallada del backend de Django (Issue #23).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Caracela Challco Anthony Jeffry</strong></td>
+                        <td>Especialista Funcional</td>
+                        <td>Responsable de analizar los flujos técnicos y funcionales para la redacción de la Guía de Usuario (Issue #22).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Choquehuanca Bedoya Brayan Denilson</strong></td>
+                        <td>QA Tester</td>
+                        <td>Encargado del diseño de la suite de testing automatizado y pruebas de regresión en el pipeline (Issue #21).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cuno Cahuari Armando Steven</strong></td>
+                        <td>DevOps Engineer</td>
+                        <td>Responsable de la automatización documental y despliegue del flujo técnico en GitHub Pages (Issue #20).</td>
+                    </tr>
+                </tbody>
+            </table>
 
-			<h3>Roles y Responsabilidades (Sprint 2):</h3>
-			<table>
-				<thead>
-					<tr>
-						<th>Integrante</th>
-						<th>Rol</th>
-						<th>Responsabilidades</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Arce Valencia Anderson Lino</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Caracela Challco Anthony Jeffry</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Choquehuanca Bedoya Brayan Denilson</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Condori Caira Antony Beltran</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Cuno Cahuari Armando Steven</td>
-						<td></td>
-						<td></td>
-					</tr>
-				</tbody>
-			</table>
+            <h3>Roles y Responsabilidades (Sprint 3)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Integrante</th>
+                        <th>Rol</th>
+                        <th>Responsabilidades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Arce Valencia Anderson Lino</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Caracela Challco Anthony Jeffry</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Choquehuanca Bedoya Brayan Denilson</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Condori Caira Antony Beltran</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Cuno Cahuari Armando Steven</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
 
-			<h3>Roles y Responsabilidades (Sprint 3):</h3>
-			<table>
-				<thead>
-					<tr>
-						<th>Integrante</th>
-						<th>Rol</th>
-						<th>Responsabilidades</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Arce Valencia Anderson Lino</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Caracela Challco Anthony Jeffry</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Choquehuanca Bedoya Brayan Denilson</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Condori Caira Antony Beltran</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Cuno Cahuari Armando Steven</td>
-						<td></td>
-						<td></td>
-					</tr>
-				</tbody>
-			</table>
+            <h3>Roles y Responsabilidades (Sprint 4)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Integrante</th>
+                        <th>Rol</th>
+                        <th>Responsabilidades</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Arce Valencia Anderson Lino</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Caracela Challco Anthony Jeffry</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Choquehuanca Bedoya Brayan Denilson</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Condori Caira Antony Beltran</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Cuno Cahuari Armando Steven</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
 
-			<h3>Roles y Responsabilidades (Sprint 4):</h3>
-			<table>
-				<thead>
-					<tr>
-						<th>Integrante</th>
-						<th>Rol</th>
-						<th>Responsabilidades</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td>Arce Valencia Anderson Lino</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Caracela Challco Anthony Jeffry</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Choquehuanca Bedoya Brayan Denilson</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Condori Caira Antony Beltran</td>
-						<td></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td>Cuno Cahuari Armando Steven</td>
-						<td></td>
-						<td></td>
-					</tr>
-				</tbody>
-			</table>
-
-		</section>
-		<section>
-		    <h2>5. Cronograma Maestro del Proyecto</h2>
-		    <p>
-		        El cronograma maestro define la planificación del proyecto mediante Sprints de 15 días,
-		        alineados a los hitos del curso y bajo enfoque Scrum + DevOps. Incluye las fases de desarrollo,
-		        actividades técnicas, entregables y control de avance hasta la entrega final.
-		    </p>
-		
-		    <table>
-		        <thead>
-		            <tr>
-		                <th>Fase / Sprint</th>
-		                <th>Fechas</th>
-		                <th>Avance esperado</th>
-		                <th>Actividades Scrum</th>
-		                <th>Actividades DevOps / Técnicas</th>
-		                <th>Evidencias / Entregables</th>
-		            </tr>
-		        </thead>
-		        <tbody>
-		            <tr>
-		                <td><strong>Sprint 0</strong><br>Planificación</td>
-		                <td>01 mayo - 13 mayo</td>
-		                <td>15%</td>
-		                <td>
-		                    - Formación del equipo<br>
-		                    - Definir roles<br>
-		                    - Crear Product Backlog<br>
-		                    - Configurar GitHub Projects
-		                </td>
-		                <td>
-		                    - Selección Django CRM<br>
-		                    - Revisión documentación<br>
-		                    - Análisis de módulos<br>
-		                    - Fork y setup inicial
-		                </td>
-		                <td>
-		                    - Plan del proyecto<br>
-		                    - Cronograma maestro<br>
-		                    - Repo configurado
-		                </td>
-		            </tr>
-		
-		            <tr>
-		                <td><strong>Hito 1</strong></td>
-		                <td>13 mayo</td>
-		                <td>15%</td>
-		                <td>Revisión Sprint 0</td>
-		                <td>Validación entorno inicial</td>
-		                <td>Entrega del plan y cronograma</td>
-		            </tr>
-		
-		            <tr>
-		                <td><strong>Sprint 1</strong><br>Análisis</td>
-		                <td>14 mayo - 28 mayo</td>
-		                <td>30%</td>
-		                <td>
-		                    - Refinar backlog<br>
-		                    - Crear Issues<br>
-		                    - Asignar tareas<br>
-		                    - Seguimiento diario
-		                </td>
-		                <td>
-		                    - Configurar entorno local<br>
-		                    - Analizar arquitectura<br>
-		                    - Identificar mejoras
-		                </td>
-		                <td>
-		                    - Backlog definido<br>
-		                    - Issues creados<br>
-		                    - Documentación base
-		                </td>
-		            </tr>
-		
-		            <tr>
-		                <td><strong>Sprint 2</strong><br>Implementación</td>
-		                <td>29 mayo - 10 junio</td>
-		                <td>60%</td>
-		                <td>
-		                    - Sprint Planning<br>
-		                    - Desarrollo tareas<br>
-		                    - Daily Scrum<br>
-		                    - Review
-		                </td>
-		                <td>
-		                    - Configurar CI/CD<br>
-		                    - GitHub Actions<br>
-		                    - Deploy staging
-		                </td>
-		                <td>
-		                    - Software funcional<br>
-		                    - Pipeline activo<br>
-		                    - Evidencias CI/CD
-		                </td>
-		            </tr>
-		
-		            <tr>
-		                <td><strong>Hito 2</strong></td>
-		                <td>10 junio</td>
-		                <td>60%</td>
-		                <td>Revisión Sprint 1 y 2</td>
-		                <td>Validación CI/CD</td>
-		                <td>Producto funcionando</td>
-		            </tr>
-		
-		            <tr>
-		                <td><strong>Sprint 3</strong><br>Mejoras</td>
-		                <td>11 junio - 26 junio</td>
-		                <td>80%</td>
-		                <td>
-		                    - Repriorizar backlog<br>
-		                    - Corregir bugs<br>
-		                    - Retrospectiva
-		                </td>
-		                <td>
-		                    - Refactorización<br>
-		                    - Optimizar pipeline<br>
-		                    - Mejoras sistema
-		                </td>
-		                <td>
-		                    - Bugs resueltos<br>
-		                    - Pipeline estable
-		                </td>
-		            </tr>
-		
-		            <tr>
-		                <td><strong>Sprint 4</strong><br>Cierre</td>
-		                <td>27 junio - 13 julio</td>
-		                <td>100%</td>
-		                <td>
-		                    - Sprint final<br>
-		                    - Retrospectiva<br>
-		                    - Cierre backlog
-		                </td>
-		                <td>
-		                    - Deploy final<br>
-		                    - Documentación<br>
-		                    - Informe IEEE
-		                </td>
-		                <td>
-		                    - Producto final<br>
-		                    - Documentación completa
-		                </td>
-		            </tr>
-		
-		            <tr>
-		                <td><strong>Hito 3</strong></td>
-		                <td>13 julio</td>
-		                <td>100%</td>
-		                <td>Cierre del proyecto</td>
-		                <td>Validación final</td>
-		                <td>Entrega total</td>
-		            </tr>
-		        </tbody>
-		    </table>
-		</section>
-		
-		<footer>
-			<strong>Django-CRM / BottleCRM</strong> · IPS 2026-A
-		</footer>
-	</div>
-	</body>
+        <section>
+            <h2>5. Cronograma Maestro del Proyecto</h2>
+            <p>
+                El cronograma maestro define la planificación del proyecto mediante Sprints de 15 días,
+                alineados a los hitos del curso y bajo enfoque Scrum + DevOps. Incluye las fases de desarrollo,
+                actividades técnicas, entregables y control de avance hasta la entrega final.
+            </p>
+        
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fase / Sprint</th>
+                        <th>Fechas</th>
+                        <th>Avance esperado</th>
+                        <th>Actividades Scrum</th>
+                        <th>Actividades DevOps / Técnicas</th>
+                        <th>Evidencias / Entregables</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sprint 0</strong><br>Planificación</td>
+                        <td>01 mayo - 13 mayo</td>
+                        <td>15%</td>
+                        <td>
+                            - Formación del equipo<br>
+                            - Definir roles<br>
+                            - Crear Product Backlog<br>
+                            - Configurar GitHub Projects
+                        </td>
+                        <td>
+                            - Selección Django CRM<br>
+                            - Revisión documentación<br>
+                            - Análisis de módulos<br>
+                            - Fork y setup inicial
+                        </td>
+                        <td>
+                            - Plan del proyecto<br>
+                            - Cronograma maestro<br>
+                            - Repo configurado
+                        </td>
+                    </tr>
+        
+                    <tr>
+                        <td><strong>Hito 1</strong></td>
+                        <td>13 mayo</td>
+                        <td>15%</td>
+                        <td>Revisión Sprint 0</td>
+                        <td>Validación entorno inicial</td>
+                        <td>Entrega del plan y cronograma</td>
+                    </tr>
+        
+                    <tr>
+                        <td><strong>Sprint 1</strong><br>Análisis</td>
+                        <td>14 mayo - 28 mayo</td>
+                        <td>30%</td>
+                        <td>
+                            - Refinar backlog<br>
+                            - Crear Issues<br>
+                            - Asignar tareas<br>
+                            - Seguimiento diario
+                        </td>
+                        <td>
+                            - Configurar entorno local<br>
+                            - Analizar arquitectura<br>
+                            - Identificar mejoras
+                        </td>
+                        <td>
+                            - Backlog definido<br>
+                            - Issues creados<br>
+                            - Documentación base
+                        </td>
+                    </tr>
+        
+                    <tr>
+                        <td><strong>Sprint 2</strong><br>Implementación</td>
+                        <td>29 mayo - 10 junio</td>
+                        <td>60%</td>
+                        <td>
+                            - Sprint Planning<br>
+                            - Desarrollo tareas<br>
+                            - Daily Scrum<br>
+                            - Review
+                        </td>
+                        <td>
+                            - Configurar CI/CD<br>
+                            - GitHub Actions<br>
+                            - Deploy staging
+                        </td>
+                        <td>
+                            - Software funcional<br>
+                            - Pipeline activo<br>
+                            - Evidencias CI/CD
+                        </td>
+                    </tr>
+        
+                    <tr>
+                        <td><strong>Hito 2</strong></td>
+                        <td>10 junio</td>
+                        <td>60%</td>
+                        <td>Revisión Sprint 1 y 2</td>
+                        <td>Validación CI/CD</td>
+                        <td>Producto funcionando</td>
+                    </tr>
+        
+                    <tr>
+                        <td><strong>Sprint 3</strong><br>Mejoras</td>
+                        <td>11 junio - 26 junio</td>
+                        <td>80%</td>
+                        <td>
+                            - Repriorizar backlog<br>
+                            - Corregir bugs<br>
+                            - Retrospectiva
+                        </td>
+                        <td>
+                            - Refactorización<br>
+                            - Optimizar pipeline<br>
+                            - Mejoras sistema
+                        </td>
+                        <td>
+                            - Bugs resueltos<br>
+                            - Pipeline stable
+                        </td>
+                    </tr>
+        
+                    <tr>
+                        <td><strong>Sprint 4</strong><br>Cierre</td>
+                        <td>27 junio - 13 julio</td>
+                        <td>100%</td>
+                        <td>
+                            - Sprint final<br>
+                            - Retrospectiva<br>
+                            - Cierre backlog
+                        </td>
+                        <td>
+                            - Deploy final<br>
+                            - Documentación<br>
+                            - Informe IEEE
+                        </td>
+                        <td>
+                            - Producto final<br>
+                            - Documentación completa
+                        </td>
+                    </tr>
+        
+                    <tr>
+                        <td><strong>Hito 3</strong></td>
+                        <td>13 julio</td>
+                        <td>100%</td>
+                        <td>Cierre del proyecto</td>
+                        <td>Validación final</td>
+                        <td>Entrega total</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+        
+        <footer>
+            <strong>Django-CRM / BottleCRM</strong> · IPS 2026-A
+        </footer>
+    </div>
+</body>
 </html>

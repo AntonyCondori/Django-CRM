@@ -1,0 +1,87 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const core = require('@sentry/core');
+const flush = require('../../flush.js');
+const instrument = require('../../instrument.js');
+const options = require('../../options.js');
+const scopeUtils = require('../../scope-utils.js');
+const sdk = require('../../sdk.js');
+const instrumentContext = require('../../utils/instrumentContext.js');
+const instrumentEnv = require('./instrumentEnv.js');
+
+/**
+ * Core tail handler logic - wraps execution with Sentry instrumentation.
+ * Note: tail handlers don't create spans, just error capture.
+ */
+function wrapTailHandler(options, context, fn) {
+  return core.withIsolationScope(async isolationScope => {
+    const waitUntil = context.waitUntil.bind(context);
+
+    const client = sdk.init({ ...options, ctx: context });
+    isolationScope.setClient(client);
+
+    scopeUtils.addCloudResourceContext(isolationScope);
+
+    try {
+      return await fn();
+    } catch (e) {
+      core.captureException(e, { mechanism: { handled: false, type: 'auto.faas.cloudflare.tail' } });
+      throw e;
+    } finally {
+      waitUntil(flush.flushAndDispose(client));
+    }
+  });
+}
+
+/**
+ * Instruments a tail handler for ExportedHandler (env/ctx come from args).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instrumentExportedHandlerTail(
+  handler,
+  optionsCallback,
+) {
+  if (!('tail' in handler) || typeof handler.tail !== 'function') {
+    return;
+  }
+
+  handler.tail = instrument.ensureInstrumented(
+    handler.tail,
+    original =>
+      new Proxy(original, {
+        apply(target, thisArg, args) {
+          const [, env, ctx] = args;
+          const context = instrumentContext.instrumentContext(ctx);
+          const options$1 = options.getFinalOptions(optionsCallback(env), env);
+          args[1] = instrumentEnv.instrumentEnv(env, options$1);
+          args[2] = context;
+
+          return wrapTailHandler(options$1, context, () => target.apply(thisArg, args));
+        },
+      }),
+  );
+}
+
+/**
+ * Instruments a tail method for WorkerEntrypoint (options/context already available).
+ */
+function instrumentWorkerEntrypointTail(
+  instance,
+  options,
+  context,
+) {
+  if (!instance.tail) {
+    return;
+  }
+
+  const original = instance.tail.bind(instance);
+  instance.tail = new Proxy(original, {
+    apply(target, thisArg, args) {
+      return wrapTailHandler(options, context, () => Reflect.apply(target, thisArg, args));
+    },
+  });
+}
+
+exports.instrumentExportedHandlerTail = instrumentExportedHandlerTail;
+exports.instrumentWorkerEntrypointTail = instrumentWorkerEntrypointTail;
+//# sourceMappingURL=instrumentTail.js.map

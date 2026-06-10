@@ -1,0 +1,1 @@
+{"version":3,"file":"cloudflare.d.ts","sourceRoot":"","sources":["../../../src/worker/cloudflare.ts"],"names":[],"mappings":"AAAA,OAAO,EACL,KAAK,iBAAiB,EAIvB,MAAM,oBAAoB,CAAC;AAE5B,OAAO,KAAK,EAAE,MAAM,EAAE,MAAM,eAAe,CAAC;AAI5C;;;;;GAKG;AACH,wBAAgB,0BAA0B,CAAC,OAAO,EAAE,iBAAiB,GAAG,MAAM,CAsC7E"}

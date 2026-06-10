@@ -1,0 +1,41 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+/**
+ * Checks if a value is a JSRPC proxy (service binding).
+ *
+ * JSRPC proxies return a truthy value for ANY property access, including
+ * properties that don't exist. This makes other duck-type checks unreliable
+ * unless we exclude JSRPC first.
+ *
+ * Must be checked before other binding type checks.
+ */
+function isJSRPC(item) {
+  try {
+    return !!(item )[`__some_property_that_will_never_exist__${Math.random()}`];
+  } catch {
+    return false;
+  }
+}
+
+const isNotJSRPC = (item) => !isJSRPC(item);
+
+/**
+ * Duck-type check for DurableObjectNamespace bindings.
+ * DurableObjectNamespace has `idFromName`, `idFromString`, `get`, `newUniqueId`.
+ */
+function isDurableObjectNamespace(item) {
+  return item != null && isNotJSRPC(item) && typeof item.idFromName === 'function';
+}
+
+/**
+ * Duck-type check for Queue producer bindings.
+ * Queue has `send` and `sendBatch` async methods.
+ */
+function isQueue(item) {
+  return item != null && isNotJSRPC(item) && typeof item.send === 'function' && typeof item.sendBatch === 'function';
+}
+
+exports.isDurableObjectNamespace = isDurableObjectNamespace;
+exports.isJSRPC = isJSRPC;
+exports.isQueue = isQueue;
+//# sourceMappingURL=isBinding.js.map

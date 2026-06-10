@@ -1,0 +1,18 @@
+import type { Integration, SpanJSON, StreamedSpanJSON } from '@sentry/core';
+/**
+ * A small integration that preprocesses spans so that SvelteKit-generated spans
+ * (via Kit's tracing feature since 2.31.0) get the correct Sentry attributes
+ * and data.
+ */
+export declare function svelteKitSpansIntegration(): Integration;
+/**
+ * Adds sentry-specific attributes and data to a span emitted by SvelteKit's native tracing (since 2.31.0)
+ * @exported for testing
+ */
+export declare function _enhanceKitSpan(span: SpanJSON): void;
+/**
+ * Streaming-mode counterpart of {@link _enhanceKitSpan} operating on {@link StreamedSpanJSON}.
+ * @exported for testing
+ */
+export declare function _enhanceKitSpanStreamed(span: StreamedSpanJSON): void;
+//# sourceMappingURL=svelteKitSpans.d.ts.map

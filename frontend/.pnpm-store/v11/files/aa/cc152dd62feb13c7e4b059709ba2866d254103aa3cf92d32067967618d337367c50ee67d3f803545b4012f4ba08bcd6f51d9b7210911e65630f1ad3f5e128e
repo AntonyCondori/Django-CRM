@@ -1,0 +1,38 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const core = require('@sentry/core');
+
+/**
+ * Wraps a fetch-like function to create a span and propagate trace headers
+ * (`sentry-trace` and `baggage`) on the outgoing request.
+ *
+ * Useful for instrumenting Cloudflare bindings that expose a `fetch` method
+ * (e.g. Durable Object stubs, Service bindings).
+ */
+function instrumentFetcher(fetchFn) {
+  return function (input, init) {
+    const headers = core._INTERNAL_getTracingHeadersForFetchRequest(input, { headers: init?.headers });
+
+    if (input instanceof Request && init === undefined) {
+      if (!headers) {
+        return fetchFn(input);
+      }
+
+      // Newly created headers already include the previous headers from the original request
+      // so we can clone the request and pass in all headers.
+      const requestWithTracing = new Request(input, { headers: headers  });
+
+      return fetchFn(requestWithTracing);
+    }
+
+    const mergedInit = {
+      ...init,
+      ...(headers ? { headers } : {}),
+    } ;
+
+    return fetchFn(input, mergedInit);
+  };
+}
+
+exports.instrumentFetcher = instrumentFetcher;
+//# sourceMappingURL=instrumentFetcher.js.map

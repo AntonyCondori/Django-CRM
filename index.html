@@ -319,43 +319,102 @@
                 </tbody>
             </table>
 
-            <h3>Roles y Responsabilidades (Sprint 1)</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Integrante</th>
-                        <th>Rol</th>
-                        <th>Responsabilidades</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Arce Valencia Anderson Lino</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Caracela Challco Anthony Jeffry</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Choquehuanca Bedoya Brayan Denilson</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Condori Caira Antony Beltran</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td>Cuno Cahuari Armando Steven</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
+            <h3>Roles y Responsabilidades (Sprint 1):</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Integrante</th>
+						<th>Rol</th>
+						<th>Responsabilidades</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Arce Valencia Anderson Lino</td>
+						<td><strong>Analista de Seguridad</strong></td>
+						<td>[QA-DEBT] Ejecución del diagnóstico de dependencias y escaneo de vulnerabilidades del servidor con la herramienta UV.</td>
+					</tr>
+					<tr>
+						<td>Caracela Challco Anthony Jeffry</td>
+						<td><strong>DevOps Frontend</strong></td>
+						<td>[DEVOPS-CI] Diseño y configuración base de las tareas de validación estática y formato para el cliente SvelteKit.</td>
+					</tr>
+					<tr>
+						<td>Choquehuanca Bedoya Brayan Denilson</td>
+						<td><strong>Líder: Scrum Master</strong></td>
+						<td>[DOC] Gestión del Sprint Backlog, facilitación de ceremonias y automatización de la extracción del esquema de la API (Swagger).</td>
+					</tr>
+					<tr>
+						<td>Condori Caira Antony Beltran</td>
+						<td><strong>Líder Técnico</strong></td>
+						<td>[ENV] Estandarización del entorno de contenedores Docker en Windows 11 y estabilización del script seed_data.</td>
+					</tr>
+					<tr>
+						<td>Cuno Cahuari Armando Steven</td>
+						<td><strong>DevOps Backend</strong></td>
+						<td>[DEVOPS-CI] Definición de la estructura base y linters automatizados para el pipeline de Integración Continua de Django.</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<!-- Sección de Avance Técnico y Backlog del Sprint 1 -->
+			<div style="margin-top: -15px; margin-bottom: 35px;">
+				<h3 style="font-size: 16px; color: #2457ff; margin-bottom: 12px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;">
+					📌 Estado de Ejecución del Sprint Backlog (Sprint 1)
+				</h3>
+				
+				<div class="grid" style="margin-top: 10px;">
+					<!-- Tarea de Antony -->
+					<div class="card" style="border-left: 3px solid #28a745;">
+						<h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
+							✔ Condori Caira Antony Beltran (Entorno de Desarrollo)
+						</h4>
+						<p style="font-size: 13px; color: #555; margin-bottom: 0;">
+							<strong>[ENV] Estandarización de Contenedores en Windows:</strong> Finalizado con éxito. Se adaptó el <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">frontend/Dockerfile</code> con el comando <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">--no-frozen-lockfile</code>, garantizando el despliegue local reproducible mediante <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">docker compose up --build</code> y la inyección de datos de prueba (<code style="background: #eee; padding: 2px 4px; border-radius: 3px;">seed_data</code>).
+						</p>
+					</div>
+
+					<!-- Tarea de Denilson -->
+					<div class="card" style="border-left: 3px solid #28a745;">
+						<h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
+							✔ Choquehuanca Bedoya Brayan Denilson (Extracción Documental)
+						</h4>
+						<p style="font-size: 13px; color: #555; margin-bottom: 0;">
+							<strong>[DOC] Automatización y Exportación de OpenAPI Spec:</strong> Finalizado con éxito. Se configuró y ejecutó de forma nativa la extracción del esquema técnico de la API de Django REST Framework generando el archivo <code style="background: #eee; padding: 2px 4px; border-radius: 3px;">schema.yml</code>, el cual centraliza el catálogo completo de endpoints de los módulos core del CRM.
+						</p>
+					</div>
+
+					<!-- Tarea de Anderson -->
+					<div class="card" style="border-left: 3px solid #28a745;">
+						<h4 style="font-size: 14px; color: #1e7e34; font-weight: bold; margin-bottom: 5px;">
+							✔ Arce Valencia Anderson Lino (Análisis de Dependencias)
+						</h4>
+						<p style="font-size: 13px; color: #555; margin-bottom: 0;">
+							<strong>[QA-DEBT] Auditoría Temprana de Librerías con Herramienta UV:</strong> Finalizado con éxito. Se ejecutó la auditoría de dependencias y el escaneo de vulnerabilidades del servidor dentro del contenedor de Django, mapeando la deuda técnica heredada y listando las librerías críticas que requieren actualización.
+						</p>
+					</div>
+
+					<!-- Tarea de Steven (En Progreso) -->
+					<div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+						<h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+							⏳ Cuno Cahuari Armando Steven (DevOps Backend)
+						</h4>
+						<p style="font-size: 13px; color: #666; margin-bottom: 0;">
+							<strong>[DEVOPS-CI] Pipeline de Integración Continua del Servidor:</strong> En progreso. Definición de la estructura inicial y los scripts de validación sintáctica del backend. El flujo automatizado para el entorno remoto quedará alineado con el avance del cronograma académico.
+						</p>
+					</div>
+
+					<!-- Tarea de Jeffry (En Progreso) -->
+					<div class="card" style="border-left: 3px solid #ffc107; background-color: #fffdf5;">
+						<h4 style="font-size: 14px; color: #856404; font-weight: bold; margin-bottom: 5px;">
+							⏳ Caracela Challco Anthony Jeffry (DevOps Frontend)
+						</h4>
+						<p style="font-size: 13px; color: #666; margin-bottom: 0;">
+							<strong>[DEVOPS-CI] Tareas de Validación Automatizada del Cliente Web:</strong> En progreso. Diseño base de las tareas de verificación de formato y pruebas estáticas para la interfaz de SvelteKit, quedando pendiente su integración final en la infraestructura del pipeline.
+						</p>
+					</div>
+				</div>
+			</div>
 
             <h3>Roles y Responsabilidades (Sprint 2 - Sprint Actual)</h3>
             <table>

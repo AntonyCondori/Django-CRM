@@ -19,6 +19,10 @@ from common import serializer
 from common.models import Org, Profile, User
 from common.serializer import OrgAwareRefreshToken
 
+import os
+from django.shortcuts import redirect
+from google_auth_oauthlib.flow import Flow
+
 logger = logging.getLogger(__name__)
 
 
@@ -633,3 +637,33 @@ class MagicLinkVerifyView(APIView):
             }
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+class GoogleLoginInitiateView(APIView):
+
+    permission_classes = []
+    authentication_classes = []
+
+    @extend_schema(
+        tags=["auth"],
+        description="Redirects the user to Google's OAuth consent screen.",
+    )
+    def get(self, request):
+      
+        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+
+        SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+        flow = Flow.from_client_secrets_file(
+            'credentials.json',
+            scopes=SCOPES,
+            redirect_uri='http://localhost:8000/google/callback/' 
+        )
+
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true',
+            prompt='consent'
+        )
+
+        request.session['google_oauth_state'] = state
+        return redirect(authorization_url)

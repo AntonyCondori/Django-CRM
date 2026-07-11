@@ -37,6 +37,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Esta es la línea clave que mantiene vivo al servidor
+    command: python manage.py runserver 0.0.0.0:8000
 
   celery-worker:
     build:

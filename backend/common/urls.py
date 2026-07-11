@@ -8,6 +8,7 @@ from common.views.auth_views import (
     MeView,
     OrgAwareTokenRefreshView,
     OrgSwitchView,
+    GoogleLoginInitiateView,
 )
 from common.views.custom_field_views import (
     CustomFieldDefinitionDetailView,
@@ -53,6 +54,8 @@ urlpatterns = [
     path("auth/me/", MeView.as_view(), name="me"),
     path("auth/profile/", ProfileDetailView.as_view(), name="profile_detail"),
     path("auth/switch-org/", OrgSwitchView.as_view(), name="switch_org"),
+    # 1. Ruta para iniciar la conexión (redirige a Google)
+    path("auth/google/conectar/", GoogleLoginInitiateView.as_view(), name="conectar_google"),
     # Google OAuth callback with PKCE (secure implementation)
     path("auth/google/callback/", GoogleOAuthCallbackView.as_view()),
     # Google ID token auth for mobile apps

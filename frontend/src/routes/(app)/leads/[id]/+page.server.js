@@ -27,8 +27,20 @@ export async function load({ params, locals, cookies }) {
     // Django LeadDetailView returns the lead under `lead_obj` (see backend/leads/views/lead_views.py).
     const lead = response.lead_obj || response.lead || response;
 
+    // CONSULTA DE AUDITORÍA: Llama a la API usando las cookies y organización actuales
+    let history = [];
+    try {
+        const historyResponse = await apiRequest(`/leads/${params.id}/history/`, {}, { cookies, org });
+        if (historyResponse && !historyResponse.error) {
+            history = historyResponse;
+        }
+    } catch (e) {
+        console.error('No se pudo cargar la auditoría en el frontend:', e);
+    }
+
     return {
       lead,
+      history,
       comments: response.comments || [],
       attachments: response.attachments || [],
       tags: response.tags || lead?.tags || [],

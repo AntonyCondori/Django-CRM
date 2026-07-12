@@ -60,6 +60,7 @@ frontend/build/
 frontend/.env
 frontend/.env.local
 frontend/package-lock.json
+frontend/.pnpm-store/**
 
 # Logs
 logs/
@@ -78,3 +79,6 @@ CLAUDE.md
 TODO.md
 .playwright-mcp
 .superpowers/
+
+# node
+node_modules/

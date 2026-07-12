@@ -40,27 +40,27 @@ Antes de construir los contenedores, debes aplicar de manera exacta las siguient
 ```dockerfile
      ENV CI=true
      RUN pnpm install --no-frozen-lockfile --ignore-scripts
-     ```
+```
 
 3. **.dockerignore**:
    - Añadir al final del archivo para evitar la copia de entornos virtuales locales:
 ```text
      backend/.venv
      backend/.venv/
-     ```
+```
 
 4. **.env.docker**:
    - Asegurar que la URL del API de Django para el Frontend apunte al contenedor correspondiente:
 ```env
      # Frontend
      PUBLIC_DJANGO_API_URL=http://backend:8000
-     ```
+```
 
 5. **backend/common -> tasks.py**:
    - Insertar exactamente debajo de la línea 84 la impresión en consola para el token de autenticación:
 ```python
      print(f"\n\n-------- AQUÍ ESTÁ TU ENLACE MÁGICO: {magic_link_url}\n\n")
-     ```
+```
 
 ---
 

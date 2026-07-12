@@ -10,6 +10,7 @@
   import { Avatar, AvatarFallback, gradientFor } from '$lib/components/ui/avatar/index.js';
 
   import {
+    Calendar,
     LayoutDashboard,
     Target,
     Users,
@@ -201,6 +202,9 @@
       ]
     },
     { href: '/tasks', label: 'Tasks', icon: CheckSquare, type: 'link', preload: 'off', count: undefined },
+    { href: '/calendar', label: 'Calendar', icon: Calendar, type: 'link', preload: 'off', count: undefined }, 
+    { href: '/timesheet', label: 'Timesheet', icon: Clock, type: 'link', preload: 'off', count: undefined },
+    { href: '/goals', label: 'Goals', icon: Trophy, type: 'link', preload: 'off', count: undefined },
     { href: '/timesheet', label: 'Timesheet', icon: Clock, type: 'link', preload: 'off', count: undefined },
     { href: '/goals', label: 'Goals', icon: Trophy, type: 'link', preload: 'off', count: undefined }
   ];

@@ -881,3 +881,53 @@ class TeamswaggerCreateSerializer(serializers.ModelSerializer):
             "description",
             "users",
         )
+
+
+class GlobalAuditLogSerializer(serializers.Serializer):
+    history_id = serializers.IntegerField()
+    history_date = serializers.DateTimeField()
+    history_type = serializers.CharField()
+    history_user = serializers.SerializerMethodField()
+    module = serializers.SerializerMethodField()
+    object_id = serializers.CharField(source='id')
+    object_name = serializers.SerializerMethodField()
+    changes = serializers.SerializerMethodField()
+
+    def get_history_user(self, obj):
+        return obj.history_user.email if obj.history_user else "Sistema"
+
+    def get_history_type(self, obj):
+        mapping = {'+': 'Creación', '~': 'Modificación', '-': 'Eliminación'}
+        return mapping.get(obj.history_type, obj.history_type)
+
+    def get_module(self, obj):
+        # Identifica el modelo de procedencia por el nombre de la clase
+        name = obj.__class__.__name__
+        mapping = {
+            'HistoricalLead': 'Lead',
+            'HistoricalContact': 'Contacto',
+            'HistoricalAccount': 'Cuenta',
+            'HistoricalOpportunity': 'Oportunidad'
+        }
+        return mapping.get(name, name)
+
+    def get_object_name(self, obj):
+        # Intenta extraer un nombre descriptivo del registro auditado
+        for field in ['title', 'first_name', 'name']:
+            if hasattr(obj, field) and getattr(obj, field):
+                return str(getattr(obj, field))
+        return f"ID: {obj.id}"
+
+    def get_changes(self, obj):
+        changes_list = []
+        if obj.prev_record:
+            delta = obj.diff_against(obj.prev_record)
+            for change in delta.changes:
+                changes_list.append({
+                    "field": change.field,
+                    "old": change.old,
+                    "new": change.new
+                })
+        else:
+            changes_list.append({"field": "Todos", "old": None, "new": "Registro inicial creado"})
+        return changes_list

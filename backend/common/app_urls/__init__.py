@@ -2,6 +2,7 @@ from django.urls import include, path
 
 from cases.csat_views import PublicCsatView
 from tasks.urls import board_urlpatterns
+from common.views.audit_views import GlobalAuditListView
 
 app_name = "common_urls"
 urlpatterns = [
@@ -31,5 +32,11 @@ urlpatterns = [
     # link with no auth context.
     path(
         "public/csat/<str:token>/", PublicCsatView.as_view(), name="public_csat"
+    ),
+    # ENDPOINT UNIFICADO DE AUDITORÍA GENERAL
+    path(
+        "auditoria/global/", 
+        GlobalAuditListView.as_view(), 
+        name="global_audit_logs"
     ),
 ]

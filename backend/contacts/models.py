@@ -2,6 +2,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 from common.base import AssignableMixin, BaseModel
 from common.models import Org, Profile, Tags, Teams
@@ -14,7 +15,8 @@ class Contact(AssignableMixin, BaseModel):
     Contact model for CRM - Streamlined for modern sales workflow
     Based on Twenty CRM and Salesforce patterns
     """
-
+    history = HistoricalRecords()
+    
     # Core Contact Information
     first_name = models.CharField(_("First name"), max_length=255)
     last_name = models.CharField(_("Last name"), max_length=255)

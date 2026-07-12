@@ -9,7 +9,8 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
-
+from django.core.cache import cache
+from rest_framework.authentication import SessionAuthentication
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -18,6 +19,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from common import serializer
 from common.models import Org, Profile, User
 from common.serializer import OrgAwareRefreshToken
+from accounts.models import GoogleCalendarToken
 
 import os
 from django.shortcuts import redirect
@@ -639,24 +641,22 @@ class MagicLinkVerifyView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
     
 class GoogleLoginInitiateView(APIView):
-
+    """
+    Inicia el flujo OAuth2 redirigiendo al usuario a la pantalla de consentimiento de Google.
+    """
     permission_classes = []
     authentication_classes = []
 
-    @extend_schema(
-        tags=["auth"],
-        description="Redirects the user to Google's OAuth consent screen.",
-    )
+    @extend_schema(tags=["auth"])
     def get(self, request):
-      
         os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
-        SCOPES = ['https://www.googleapis.com/auth/calendar']
+        credentials_path = os.path.join(settings.BASE_DIR, 'credenciales.json')
 
         flow = Flow.from_client_secrets_file(
-            'credentials.json',
-            scopes=SCOPES,
-            redirect_uri='http://localhost:8000/google/callback/' 
+            credentials_path, 
+            scopes=['https://www.googleapis.com/auth/calendar'],
+            redirect_uri='http://localhost:8000/api/auth/google/callback/' 
         )
 
         authorization_url, state = flow.authorization_url(
@@ -665,5 +665,57 @@ class GoogleLoginInitiateView(APIView):
             prompt='consent'
         )
 
-        request.session['google_oauth_state'] = state
+        if hasattr(flow, 'code_verifier'):
+            cache.set(state, flow.code_verifier, timeout=300)
+
         return redirect(authorization_url)
+
+
+class GoogleOAuthCallbackView(APIView):
+    """
+    Handle Google OAuth authorization code exchange.
+    """
+
+    permission_classes = [] 
+    authentication_classes = [SessionAuthentication]
+
+    def get(self, request):
+        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+        credentials_path = os.path.join(settings.BASE_DIR, 'credenciales.json')
+
+        flow = Flow.from_client_secrets_file(
+            credentials_path,
+            scopes=['https://www.googleapis.com/auth/calendar'],
+            redirect_uri='http://localhost:8000/api/auth/google/callback/'
+        )
+
+        state = request.GET.get('state')
+        code_verifier = cache.get(state)
+        
+        if code_verifier:
+            flow.code_verifier = code_verifier
+
+        # Intercambiamos el código final
+        flow.fetch_token(authorization_response=request.build_absolute_uri())
+        credentials = flow.credentials
+
+        # --- AQUÍ GUARDAMOS LOS TOKENS EN TU BASE DE DATOS ---
+        # Nota: request.user debe existir. Si sale error, es porque no estás logueado.
+        if request.user.is_authenticated:
+            GoogleCalendarToken.objects.update_or_create(
+                user=request.user,
+                defaults={
+                    'access_token': credentials.token,
+                    'refresh_token': credentials.refresh_token,
+                    'expires_at': credentials.expiry,
+                }
+            )
+            mensaje_guardado = "Tokens guardados correctamente en la base de datos."
+        else:
+            mensaje_guardado = "¡OJO! No hay usuario logueado, los tokens NO se guardaron."
+
+        return Response({
+            "mensaje": "¡Integración con Google Calendar exitosa!",
+            "estado_db": mensaje_guardado,
+            "access_token": credentials.token,
+        })

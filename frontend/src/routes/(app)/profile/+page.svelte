@@ -85,12 +85,8 @@
     };
   }
 
-  // FUNCIÓN NUEVA: Redirige al backend para iniciar el flujo de OAuth de Google
-  function conectarGoogle() {
-    let urlAlert = $state({ type: '', message: '' });
-
-  // Efecto para leer si venimos de conectar Google Calendar
   $effect(() => {
+    // Escuchamos la URL por si venimos de regreso de Google
     const status = $page.url.searchParams.get('status');
     if (status === 'success') {
       urlAlert = { type: 'success', message: '¡Google Calendar conectado exitosamente!' };
@@ -100,6 +96,10 @@
       window.history.replaceState({}, '', '/profile');
     }
   });
+
+
+  function conectarGoogle() {
+    window.location.href = 'http://localhost:8000/api/auth/google/conectar/';
   }
 </script>
 
@@ -384,9 +384,9 @@
           </div>
         </div>
         
-        <Button variant="outline" onclick={conectarGoogle}>
-          Connect
-        </Button>
+     <Button variant="outline" onclick={conectarGoogle}>
+  Connect
+</Button>
       </div>
     </SectionCard>
 

@@ -20,9 +20,6 @@
     Chatbot.init({
       chatflowid: "fee610c9-7f9c-4aad-ad63-269fac3b2d48",
       apiHost: "https://cloud.flowiseai.com",
-      chatflowConfig: {
-        vars: { assistantToken: data.assistantToken }
-      }
     })
   </script>
 </svelte:head>

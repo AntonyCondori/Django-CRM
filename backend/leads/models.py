@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 from common.base import AssignableMixin, BaseModel
 from common.models import Org, Profile, Tags, Teams
@@ -25,11 +26,12 @@ from contacts.models import Contact
 # - Removed 'created_on_arrow' property (frontend computes its own timestamps)
 
 
-class Lead(AssignableMixin, BaseModel):
+class Lead(AssignableMixin, BaseModel): 
     """
     Lead model for CRM - Streamlined for modern sales workflow
     Based on Twenty CRM and Salesforce patterns
-    """
+    """ 
+    history = HistoricalRecords()
 
     # Core Lead Information
     title = models.CharField(

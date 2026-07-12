@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "orders",
     "business_hours",
     "macros",
+    "simple_history",
     # "teams",  # Merged into common app
 ]
 
@@ -55,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",  # CSRF protection
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",

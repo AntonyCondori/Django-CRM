@@ -1,0 +1,102 @@
+import { withIsolationScope, startSpan, SEMANTIC_ATTRIBUTE_SENTRY_SOURCE, SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN, captureException } from '@sentry/core';
+import { flushAndDispose } from '../../flush.js';
+import { ensureInstrumented } from '../../instrument.js';
+import { getFinalOptions } from '../../options.js';
+import { addCloudResourceContext } from '../../scope-utils.js';
+import { init } from '../../sdk.js';
+import { instrumentContext } from '../../utils/instrumentContext.js';
+import { instrumentEnv } from './instrumentEnv.js';
+
+function wrapScheduledHandler(
+  controller,
+  options,
+  context,
+  fn,
+) {
+  return withIsolationScope(isolationScope => {
+    const waitUntil = context.waitUntil.bind(context);
+
+    const client = init({ ...options, ctx: context });
+    isolationScope.setClient(client);
+
+    addCloudResourceContext(isolationScope);
+
+    return startSpan(
+      {
+        op: 'faas.cron',
+        name: `Scheduled Cron ${controller.cron}`,
+        attributes: {
+          'faas.cron': controller.cron,
+          'faas.time': new Date(controller.scheduledTime).toISOString(),
+          'faas.trigger': 'timer',
+          [SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN]: 'auto.faas.cloudflare.scheduled',
+          [SEMANTIC_ATTRIBUTE_SENTRY_SOURCE]: 'task',
+        },
+      },
+      async () => {
+        try {
+          return await fn();
+        } catch (e) {
+          captureException(e, { mechanism: { handled: false, type: 'auto.faas.cloudflare.scheduled' } });
+          throw e;
+        } finally {
+          waitUntil(flushAndDispose(client));
+        }
+      },
+    );
+  });
+}
+
+/**
+ * Instruments a scheduled handler for ExportedHandler (env/ctx come from args).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instrumentExportedHandlerScheduled(
+  handler,
+  optionsCallback,
+) {
+  if (!('scheduled' in handler) || typeof handler.scheduled !== 'function') {
+    return;
+  }
+
+  handler.scheduled = ensureInstrumented(
+    handler.scheduled,
+    original =>
+      new Proxy(original, {
+        apply(target, thisArg, args) {
+          const [controller, env, ctx] = args;
+          const context = instrumentContext(ctx);
+          const options = getFinalOptions(optionsCallback(env), env);
+          args[1] = instrumentEnv(env, options);
+          args[2] = context;
+
+          return wrapScheduledHandler(controller, options, context, () => target.apply(thisArg, args));
+        },
+      }),
+  );
+}
+
+/**
+ * Instruments a scheduled method for WorkerEntrypoint (options/context already available).
+ */
+function instrumentWorkerEntrypointScheduled(
+  instance,
+  options,
+  context,
+) {
+  if (!instance.scheduled) {
+    return;
+  }
+
+  const original = instance.scheduled.bind(instance);
+  instance.scheduled = new Proxy(original, {
+    apply(target, thisArg, args) {
+      const [controller] = args;
+
+      return wrapScheduledHandler(controller, options, context, () => Reflect.apply(target, thisArg, args));
+    },
+  });
+}
+
+export { instrumentExportedHandlerScheduled, instrumentWorkerEntrypointScheduled };
+//# sourceMappingURL=instrumentScheduled.js.map

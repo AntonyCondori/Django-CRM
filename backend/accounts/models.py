@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from simple_history.models import HistoricalRecords
 
 from common.base import AssignableMixin, BaseModel
@@ -13,7 +14,8 @@ from contacts.models import Contact
 
 
 # Cleanup notes:
-# - Removed 'created_on_arrow' property (frontend computes its own timestamps)
+# - Removed 'created_on_arrow' property (frontend computes it
+# s own timestamps)
 # - Removed 'contact_values' property (unused)
 
 
@@ -203,3 +205,14 @@ class AccountEmailLog(BaseModel):
         if not self.org_id:
             raise ValidationError("Organization is required for AccountEmailLog")
         super().save(*args, **kwargs)
+
+class GoogleCalendarToken(BaseModel):
+    # Relacionamos el token con el usuario
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    access_token = models.CharField(max_length=500)
+    refresh_token = models.CharField(max_length=500)
+    expires_at = models.DateTimeField()
+
+    def __str__(self):
+        # Cambiamos .username por .email
+        return f"Tokens de {self.user.email}"

@@ -1,0 +1,83 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const core = require('@sentry/core');
+const flush = require('../../flush.js');
+const instrument = require('../../instrument.js');
+const options = require('../../options.js');
+const scopeUtils = require('../../scope-utils.js');
+const sdk = require('../../sdk.js');
+const instrumentContext = require('../../utils/instrumentContext.js');
+const instrumentEnv = require('./instrumentEnv.js');
+
+/**
+ * Core email handler logic - wraps execution with Sentry instrumentation.
+ */
+function wrapEmailHandler(
+  emailMessage,
+  options,
+  context,
+  fn,
+) {
+  return core.withIsolationScope(isolationScope => {
+    const waitUntil = context.waitUntil.bind(context);
+
+    const client = sdk.init({ ...options, ctx: context });
+    isolationScope.setClient(client);
+
+    scopeUtils.addCloudResourceContext(isolationScope);
+
+    return core.startSpan(
+      {
+        op: 'faas.email',
+        name: `Handle Email ${emailMessage.to}`,
+        attributes: {
+          'faas.trigger': 'email',
+          [core.SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN]: 'auto.faas.cloudflare.email',
+          [core.SEMANTIC_ATTRIBUTE_SENTRY_SOURCE]: 'task',
+        },
+      },
+      async () => {
+        try {
+          return await fn();
+        } catch (e) {
+          core.captureException(e, { mechanism: { handled: false, type: 'auto.faas.cloudflare.email' } });
+          throw e;
+        } finally {
+          waitUntil(flush.flushAndDispose(client));
+        }
+      },
+    );
+  });
+}
+
+/**
+ * Instruments an email handler for ExportedHandler (env/ctx come from args).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instrumentExportedHandlerEmail(
+  handler,
+  optionsCallback,
+) {
+  if (!('email' in handler) || typeof handler.email !== 'function') {
+    return;
+  }
+
+  handler.email = instrument.ensureInstrumented(
+    handler.email,
+    original =>
+      new Proxy(original, {
+        apply(target, thisArg, args) {
+          const [emailMessage, env, ctx] = args;
+          const context = instrumentContext.instrumentContext(ctx);
+          const options$1 = options.getFinalOptions(optionsCallback(env), env);
+          args[1] = instrumentEnv.instrumentEnv(env, options$1);
+          args[2] = context;
+
+          return wrapEmailHandler(emailMessage, options$1, context, () => target.apply(thisArg, args));
+        },
+      }),
+  );
+}
+
+exports.instrumentExportedHandlerEmail = instrumentExportedHandlerEmail;
+//# sourceMappingURL=instrumentEmail.js.map

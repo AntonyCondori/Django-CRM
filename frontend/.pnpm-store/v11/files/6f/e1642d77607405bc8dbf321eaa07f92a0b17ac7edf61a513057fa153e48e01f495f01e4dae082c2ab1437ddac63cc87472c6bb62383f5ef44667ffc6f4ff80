@@ -1,0 +1,78 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const api = require('@opentelemetry/api');
+const core = require('@sentry/core');
+const debugBuild = require('../debug-build.js');
+
+/** Storage key prefix for the span context that links consecutive method invocations */
+const SENTRY_TRACE_LINK_KEY_PREFIX = '__SENTRY_TRACE_LINK__';
+
+/** Stored span context for creating span links */
+
+/**
+ * Gets the storage key for a specific method's trace link.
+ */
+function getTraceLinkKey(methodName) {
+  return `${SENTRY_TRACE_LINK_KEY_PREFIX}${methodName}`;
+}
+
+/**
+ * Stores the current span context in Durable Object storage for trace linking.
+ * Uses the original uninstrumented storage to avoid creating spans for internal operations.
+ * Errors are silently ignored to prevent internal storage failures from propagating to user code.
+ */
+async function storeSpanContext(originalStorage, methodName) {
+  try {
+    const activeSpan = core.getActiveSpan();
+    if (activeSpan) {
+      const spanContext = activeSpan.spanContext();
+      const storedContext = {
+        traceId: spanContext.traceId,
+        spanId: spanContext.spanId,
+        sampled: core.spanIsSampled(activeSpan),
+      };
+      await originalStorage.put(getTraceLinkKey(methodName), storedContext);
+    }
+  } catch (error) {
+    // Silently ignore storage errors to prevent internal failures from affecting user code
+    debugBuild.DEBUG_BUILD && core.debug.log(`[CloudflareClient] Error storing span context for method ${methodName}`, error);
+  }
+}
+
+/**
+ * Retrieves a stored span context from Durable Object storage.
+ */
+async function getStoredSpanContext(
+  originalStorage,
+  methodName,
+) {
+  try {
+    return await originalStorage.get(getTraceLinkKey(methodName));
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Builds span links from a stored span context.
+ */
+function buildSpanLinks(storedContext) {
+  return [
+    {
+      context: {
+        traceId: storedContext.traceId,
+        spanId: storedContext.spanId,
+        traceFlags: storedContext.sampled ? api.TraceFlags.SAMPLED : api.TraceFlags.NONE,
+      },
+      attributes: {
+        [core.SEMANTIC_LINK_ATTRIBUTE_LINK_TYPE]: 'previous_trace',
+      },
+    },
+  ];
+}
+
+exports.buildSpanLinks = buildSpanLinks;
+exports.getStoredSpanContext = getStoredSpanContext;
+exports.getTraceLinkKey = getTraceLinkKey;
+exports.storeSpanContext = storeSpanContext;
+//# sourceMappingURL=traceLinks.js.map

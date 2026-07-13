@@ -1,0 +1,62 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const instrument = require('../../instrument.js');
+const options = require('../../options.js');
+const request = require('../../request.js');
+const instrumentContext = require('../../utils/instrumentContext.js');
+const instrumentEnv = require('./instrumentEnv.js');
+
+/**
+ * Instruments a fetch handler for ExportedHandler (env/ctx come from args).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instrumentExportedHandlerFetch(
+  handler,
+  optionsCallback,
+) {
+  if (!('fetch' in handler) || typeof handler.fetch !== 'function') {
+    return;
+  }
+
+  handler.fetch = instrument.ensureInstrumented(
+    handler.fetch,
+    original =>
+      new Proxy(original, {
+        apply(target, thisArg, args) {
+          const [request$1, env, ctx] = args;
+          const context = instrumentContext.instrumentContext(ctx);
+          const options$1 = options.getFinalOptions(optionsCallback(env), env);
+          args[1] = instrumentEnv.instrumentEnv(env, options$1);
+          args[2] = context;
+
+          return request.wrapRequestHandler({ options: options$1, request: request$1, context }, () => target.apply(thisArg, args));
+        },
+      }),
+  );
+}
+
+/**
+ * Instruments a fetch method for WorkerEntrypoint (options/context already available).
+ */
+function instrumentWorkerEntrypointFetch(
+  instance,
+  options,
+  context,
+) {
+  if (!instance.fetch) {
+    return;
+  }
+
+  const original = instance.fetch.bind(instance);
+  instance.fetch = new Proxy(original, {
+    apply(target, thisArg, args) {
+      const [request$1] = args;
+
+      return request.wrapRequestHandler({ options, request: request$1, context }, () => Reflect.apply(target, thisArg, args));
+    },
+  });
+}
+
+exports.instrumentExportedHandlerFetch = instrumentExportedHandlerFetch;
+exports.instrumentWorkerEntrypointFetch = instrumentWorkerEntrypointFetch;
+//# sourceMappingURL=instrumentFetch.js.map

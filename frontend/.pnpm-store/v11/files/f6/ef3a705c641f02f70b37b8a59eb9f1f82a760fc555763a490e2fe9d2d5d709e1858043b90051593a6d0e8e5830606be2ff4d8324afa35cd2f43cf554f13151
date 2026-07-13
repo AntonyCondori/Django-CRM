@@ -1,0 +1,54 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const core = require('@sentry/core');
+const svelte = require('@sentry/svelte');
+
+// The SvelteKit default error handler just logs the error to the console
+// see: https://github.com/sveltejs/kit/blob/369e7d6851f543a40c947e033bfc4a9506fdc0a8/packages/kit/src/core/sync/write_client_manifest.js#LL127C2-L127C2
+function defaultErrorHandler({ error }) {
+  core.consoleSandbox(() => {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  });
+}
+
+/**
+ * Wrapper for the SvelteKit error handler that sends the error to Sentry.
+ *
+ * @param handleError The original SvelteKit error handler.
+ */
+function handleErrorWithSentry(handleError) {
+  const errorHandler = handleError ?? defaultErrorHandler;
+
+  return (input) => {
+    if (is4xxError(input)) {
+      return errorHandler(input);
+    }
+
+    svelte.captureException(input.error, {
+      mechanism: {
+        type: 'auto.function.sveltekit.handle_error',
+        handled: !!handleError,
+      },
+    });
+
+    return errorHandler(input);
+  };
+}
+
+// 4xx are expected errors and thus we don't want to capture them
+function is4xxError(input) {
+  const { status } = input;
+
+  // Pre-SvelteKit 2.x, the status is not available,
+  // so we don't know if this is a 4xx error
+  if (!status) {
+    return false;
+  }
+
+  // SvelteKit 2.0 offers a reliable way to check for a Not Found error:
+  return status >= 400 && status < 500;
+}
+
+exports.handleErrorWithSentry = handleErrorWithSentry;
+//# sourceMappingURL=handleError.js.map

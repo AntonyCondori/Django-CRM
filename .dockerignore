@@ -40,6 +40,8 @@ backend/.env.*
 .DS_Store
 Thumbs.db
 .playwright-mcp
+backend/.venv
+backend/.venv/
 
 backend/.venv
 backend/.venv/

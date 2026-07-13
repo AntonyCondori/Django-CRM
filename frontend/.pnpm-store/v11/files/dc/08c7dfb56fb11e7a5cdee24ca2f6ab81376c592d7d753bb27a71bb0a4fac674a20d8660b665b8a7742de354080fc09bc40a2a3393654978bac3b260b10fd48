@@ -1,0 +1,77 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const async = require('./async.js');
+const instrument = require('./instrument.js');
+const instrumentEmail = require('./instrumentations/worker/instrumentEmail.js');
+const instrumentFetch = require('./instrumentations/worker/instrumentFetch.js');
+const instrumentQueue = require('./instrumentations/worker/instrumentQueue.js');
+const instrumentScheduled = require('./instrumentations/worker/instrumentScheduled.js');
+const instrumentTail = require('./instrumentations/worker/instrumentTail.js');
+const hono = require('./integrations/hono.js');
+const isCloudflareClass = require('./utils/isCloudflareClass.js');
+const instrumentWorkerEntrypoint = require('./instrumentations/instrumentWorkerEntrypoint.js');
+
+/**
+ * Wrapper for Cloudflare handlers.
+ *
+ * Initializes the SDK and wraps the handler with Sentry instrumentation.
+ *
+ * Automatically instruments the `fetch` method of the handler.
+ *
+ * @param optionsCallback Function that returns the options for the SDK initialization.
+ * @param handler {ExportedHandler} The handler to wrap.
+ * @returns The wrapped handler.
+ */
+// TODO(v11): The generic types need to be rewritten to following to improve type safety:
+// T extends ExportedHandler<any, any, any> | WorkerEntrypointConstructor<any, any>
+function withSentry
+
+(optionsCallback, handler) {
+  if (isCloudflareClass.isCloudflareClass(handler, 'WorkerEntrypoint')) {
+    // oxlint-disable-next-line typescript/no-explicit-any
+    return instrumentWorkerEntrypoint.instrumentWorkerEntrypoint(optionsCallback , handler);
+  }
+
+  async.setAsyncLocalStorageAsyncContextStrategy();
+
+  try {
+    // oxlint-disable-next-line typescript/no-explicit-any
+    instrumentFetch.instrumentExportedHandlerFetch(handler, optionsCallback );
+    instrumentHonoErrorHandler(handler);
+    // oxlint-disable-next-line typescript/no-explicit-any
+    instrumentScheduled.instrumentExportedHandlerScheduled(handler, optionsCallback );
+    // oxlint-disable-next-line typescript/no-explicit-any
+    instrumentEmail.instrumentExportedHandlerEmail(handler, optionsCallback );
+    // oxlint-disable-next-line typescript/no-explicit-any
+    instrumentQueue.instrumentExportedHandlerQueue(handler, optionsCallback );
+    // oxlint-disable-next-line typescript/no-explicit-any
+    instrumentTail.instrumentExportedHandlerTail(handler, optionsCallback );
+    // This is here because Miniflare sometimes cannot get instrumented
+  } catch {
+    // Do not console anything here, we don't want to spam the console with errors
+  }
+
+  return handler;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instrumentHonoErrorHandler(handler) {
+  if ('onError' in handler && 'errorHandler' in handler && typeof handler.errorHandler === 'function') {
+    handler.errorHandler = instrument.ensureInstrumented(
+      handler.errorHandler,
+      original =>
+        new Proxy(original, {
+          apply(target, thisArg, args) {
+            const [err, context] = args;
+
+            hono.getHonoIntegration()?.handleHonoException(err, context);
+
+            return Reflect.apply(target, thisArg, args);
+          },
+        }),
+    );
+  }
+}
+
+exports.withSentry = withSentry;
+//# sourceMappingURL=withSentry.js.map

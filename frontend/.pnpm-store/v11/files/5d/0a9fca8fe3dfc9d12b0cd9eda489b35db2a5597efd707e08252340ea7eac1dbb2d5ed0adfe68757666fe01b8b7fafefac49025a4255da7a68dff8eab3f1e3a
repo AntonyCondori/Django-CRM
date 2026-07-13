@@ -1,0 +1,1 @@
+{"version":3,"file":"browserTracingIntegration.d.ts","sourceRoot":"","sources":["../../../src/client/browserTracingIntegration.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAU,WAAW,EAAQ,MAAM,cAAc,CAAC;AAE9D,OAAO,EACL,yBAAyB,IAAI,iCAAiC,EAM/D,MAAM,gBAAgB,CAAC;AAGxB;;GAEG;AACH,wBAAgB,yBAAyB,CACvC,OAAO,GAAE,UAAU,CAAC,OAAO,iCAAiC,CAAC,CAAC,CAAC,CAAM,GACpE,WAAW,CAuBb"}

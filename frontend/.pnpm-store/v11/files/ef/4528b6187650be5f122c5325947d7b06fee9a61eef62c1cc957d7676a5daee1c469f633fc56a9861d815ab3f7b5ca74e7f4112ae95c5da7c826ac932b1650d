@@ -1,0 +1,1 @@
+{"version":3,"file":"instrumentEnv.d.ts","sourceRoot":"","sources":["../../../../src/instrumentations/worker/instrumentEnv.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,iBAAiB,EAAE,MAAM,cAAc,CAAC;AActD;;;;;;;;;;;;;GAaG;AACH,wBAAgB,aAAa,CAAC,GAAG,SAAS,MAAM,CAAC,MAAM,EAAE,OAAO,CAAC,EAAE,GAAG,EAAE,GAAG,EAAE,OAAO,CAAC,EAAE,iBAAiB,GAAG,GAAG,CA8D7G"}

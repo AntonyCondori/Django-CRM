@@ -1,0 +1,95 @@
+Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+const isBinding = require('../../utils/isBinding.js');
+const rpcMeta = require('../../utils/rpcMeta.js');
+const rpcOptions = require('../../utils/rpcOptions.js');
+const instrumentDurableObjectNamespace = require('../instrumentDurableObjectNamespace.js');
+const instrumentFetcher = require('./instrumentFetcher.js');
+const instrumentQueueProducer = require('./instrumentQueueProducer.js');
+
+function isProxyable(item) {
+  return item !== null && (typeof item === 'object' || typeof item === 'function');
+}
+
+const instrumentedBindings = new WeakMap();
+
+/**
+ * Wraps the Cloudflare `env` object in a Proxy that detects binding types
+ * on property access and returns instrumented versions.
+ *
+ * Currently detects:
+ * - DurableObjectNamespace (via `idFromName` duck-typing)
+ * - Service bindings / JSRPC proxies
+ * - Queue producers (via `send` + `sendBatch` duck-typing)
+ *
+ * Extensible for future binding types (KV, D1, etc.).
+ *
+ * @param env - The Cloudflare env object to instrument
+ * @param options - Optional CloudflareOptions to control RPC trace propagation
+ */
+function instrumentEnv(env, options) {
+  if (!env || typeof env !== 'object') {
+    return env;
+  }
+
+  const rpcPropagation = options ? rpcOptions.getEffectiveRpcPropagation(options) : false;
+
+  return new Proxy(env, {
+    get(target, prop, receiver) {
+      const item = Reflect.get(target, prop, receiver);
+
+      if (!isProxyable(item)) {
+        return item;
+      }
+
+      const cached = instrumentedBindings.get(item);
+
+      if (cached) {
+        return cached;
+      }
+
+      if (isBinding.isQueue(item)) {
+        const bindingName = typeof prop === 'string' ? prop : String(prop);
+        const instrumented = instrumentQueueProducer.instrumentQueueProducer(item, bindingName);
+        instrumentedBindings.set(item, instrumented);
+        return instrumented;
+      }
+
+      if (!rpcPropagation) {
+        return item;
+      }
+
+      if (isBinding.isDurableObjectNamespace(item)) {
+        const instrumented = instrumentDurableObjectNamespace.instrumentDurableObjectNamespace(item);
+        instrumentedBindings.set(item, instrumented);
+        return instrumented;
+      }
+
+      if (isBinding.isJSRPC(item)) {
+        const instrumented = new Proxy(item, {
+          get(target, p) {
+            const value = Reflect.get(target, p);
+
+            if (p === 'fetch' && typeof value === 'function') {
+              return instrumentFetcher.instrumentFetcher((...args) => Reflect.apply(value, target, args));
+            }
+
+            if (typeof value === 'function' && typeof p === 'string' && !instrumentDurableObjectNamespace.STUB_NON_RPC_METHODS.has(p)) {
+              return (...args) => Reflect.apply(value, target, rpcMeta.appendRpcMeta(args));
+            }
+
+            return value;
+          },
+        });
+
+        instrumentedBindings.set(item, instrumented);
+        return instrumented;
+      }
+
+      return item;
+    },
+  });
+}
+
+exports.instrumentEnv = instrumentEnv;
+//# sourceMappingURL=instrumentEnv.js.map

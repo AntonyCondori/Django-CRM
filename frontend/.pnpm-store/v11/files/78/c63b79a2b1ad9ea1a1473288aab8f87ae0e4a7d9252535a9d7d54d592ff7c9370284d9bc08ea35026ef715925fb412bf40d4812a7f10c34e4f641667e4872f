@@ -1,0 +1,65 @@
+import { defineIntegration, getIsolationScope, captureBodyFromWinterCGRequest } from '@sentry/core';
+
+const INTEGRATION_NAME = 'HttpServer';
+
+const _httpServerIntegration = ((options = {}) => {
+  return {
+    name: INTEGRATION_NAME,
+    maxRequestBodySize: options.maxRequestBodySize ?? 'medium',
+    ignoreRequestBody: options.ignoreRequestBody,
+  };
+}) ;
+
+/**
+ * Configures incoming HTTP request handling for Cloudflare Workers.
+ *
+ * This integration controls how incoming HTTP request data is captured,
+ * matching the API of `httpServerIntegration` in Node.js.
+ *
+ * @example
+ * ```ts
+ * Sentry.init({
+ *   integrations: [
+ *     Sentry.httpServerIntegration({
+ *       maxRequestBodySize: 'medium',
+ *       ignoreRequestBody: (url) => url.includes('/health'),
+ *     }),
+ *   ],
+ * });
+ * ```
+ */
+const httpServerIntegration = defineIntegration(_httpServerIntegration);
+
+/**
+ * Capture the request body based on the HttpServer integration config.
+ * Called internally by `wrapRequestHandler`.
+ */
+async function captureIncomingRequestBody(client, request) {
+  const integration = client.getIntegrationByName(INTEGRATION_NAME);
+
+  if (!integration) {
+    return;
+  }
+
+  const maxRequestBodySize = integration.maxRequestBodySize;
+
+  if (maxRequestBodySize === 'none') {
+    return;
+  }
+
+  // Skip GET and HEAD requests - they don't have bodies
+  // Also skip OPTIONS, even if they may have a body, they might not give a lot of extra value
+  if (request.method === 'GET' || request.method === 'HEAD' || request.method === 'OPTIONS') {
+    return;
+  }
+
+  if (integration.ignoreRequestBody?.(request.url, request)) {
+    return;
+  }
+
+  const isolationScope = getIsolationScope();
+  await captureBodyFromWinterCGRequest(request, isolationScope, maxRequestBodySize);
+}
+
+export { captureIncomingRequestBody, httpServerIntegration };
+//# sourceMappingURL=httpServer.js.map

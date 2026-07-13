@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# PATH is already set via ENV in Dockerfile, just verify
+python --version
+
 echo "Waiting for PostgreSQL..."
 retries=0
 max_retries=30

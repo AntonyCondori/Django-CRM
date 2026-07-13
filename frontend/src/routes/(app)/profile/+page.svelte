@@ -11,6 +11,7 @@
   import { Separator } from '$lib/components/ui/separator/index.js';
   import { SectionCard } from '$lib/components/ui/section-card/index.js';
   import * as Avatar from '$lib/components/ui/avatar/index.js';
+  import { page } from '$app/stores';
 
   /** @type {{ data: import('./$types').PageData, form: import('./$types').ActionData }} */
   let { data, form } = $props();
@@ -19,7 +20,7 @@
   let isSubmitting = $state(false);
   let phoneError = $state('');
   let formattedDisplayPhone = $state('');
-
+  let urlAlert = $state({ type: '', message: '' });
   // Form data state - initialized by $effect below
   let formData = $state({
     phone: ''
@@ -83,6 +84,23 @@
       await update();
     };
   }
+
+  $effect(() => {
+    // Escuchamos la URL por si venimos de regreso de Google
+    const status = $page.url.searchParams.get('status');
+    if (status === 'success') {
+      urlAlert = { type: 'success', message: '¡Google Calendar conectado exitosamente!' };
+      window.history.replaceState({}, '', '/profile');
+    } else if (status === 'error') {
+      urlAlert = { type: 'error', message: 'Hubo un problema al conectar con Google Calendar.' };
+      window.history.replaceState({}, '', '/profile');
+    }
+  });
+
+
+  function conectarGoogle() {
+    window.location.href = 'http://localhost:8000/api/auth/google/conectar/';
+  }
 </script>
 
 <svelte:head>
@@ -109,7 +127,7 @@
 
 <div class="flex-1 space-y-6 p-4 md:p-6">
   <!-- Success/Error Messages -->
-  {#if form?.success}
+{#if form?.success || urlAlert.type === 'success'}
     <SectionCard
       padded={false}
       class="border-[var(--color-success-default)]/20 bg-[var(--color-success-light)] p-4"
@@ -121,7 +139,25 @@
           <Check class="h-4 w-4 text-[var(--color-success-default)]" />
         </div>
         <p class="text-sm font-medium text-[var(--color-success-default)]">
-          {form.message}
+          {form?.message || urlAlert.message}
+        </p>
+      </div>
+    </SectionCard>
+  {/if}
+
+  {#if form?.error || urlAlert.type === 'error'}
+    <SectionCard
+      padded={false}
+      class="border-[var(--color-negative-default)]/20 bg-[var(--color-negative-light)] p-4"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-negative-light)] dark:bg-[var(--color-negative-default)]/20"
+        >
+          <X class="h-4 w-4 text-[var(--color-negative-default)]" />
+        </div>
+        <p class="text-sm font-medium text-[var(--color-negative-default)]">
+          {form?.error || urlAlert.message}
         </p>
       </div>
     </SectionCard>
@@ -315,6 +351,43 @@
             </div>
           </div>
         {/if}
+    </SectionCard>
+
+    <!-- SECCIÓN NUEVA: Integrations Card -->
+    <SectionCard>
+      {#snippet title()}
+        <div class="flex min-w-0 flex-col gap-0.5">
+          <h3 class="truncate text-[16px] font-medium leading-[1.3] text-[color:var(--text-primary)]">
+            Integrations
+          </h3>
+          <p class="text-[12px] text-[color:var(--text-muted)]">
+            Connect third-party apps to enhance your workflow
+          </p>
+        </div>
+      {/snippet}
+      
+      <div class="bg-muted/30 flex items-center justify-between rounded-lg border p-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--color-primary-default)]/10"
+          >
+            <!-- Usamos el ícono de Calendar que ya tenías importado -->
+            <Calendar class="h-5 w-5 text-[var(--color-primary-default)]" />
+          </div>
+          <div>
+            <h4 class="text-foreground font-medium">
+              Google Calendar
+            </h4>
+            <p class="text-muted-foreground text-sm">
+              Sync your events and meetings
+            </p>
+          </div>
+        </div>
+        
+     <Button variant="outline" onclick={conectarGoogle}>
+  Connect
+</Button>
+      </div>
     </SectionCard>
 
     <!-- Organizations Card -->

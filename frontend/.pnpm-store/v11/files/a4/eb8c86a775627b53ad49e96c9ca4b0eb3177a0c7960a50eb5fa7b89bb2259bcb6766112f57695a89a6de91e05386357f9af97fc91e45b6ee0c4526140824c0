@@ -1,0 +1,110 @@
+import { withIsolationScope, startSpan, SEMANTIC_ATTRIBUTE_SENTRY_SOURCE, SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN, SEMANTIC_ATTRIBUTE_SENTRY_OP, captureException } from '@sentry/core';
+import { flushAndDispose } from '../../flush.js';
+import { ensureInstrumented } from '../../instrument.js';
+import { getFinalOptions } from '../../options.js';
+import { addCloudResourceContext } from '../../scope-utils.js';
+import { init } from '../../sdk.js';
+import { instrumentContext } from '../../utils/instrumentContext.js';
+import { instrumentEnv } from './instrumentEnv.js';
+
+/**
+ * Core queue handler logic - wraps execution with Sentry instrumentation.
+ */
+function wrapQueueHandler(
+  batch,
+  options,
+  context,
+  fn,
+) {
+  return withIsolationScope(isolationScope => {
+    const waitUntil = context.waitUntil.bind(context);
+
+    const client = init({ ...options, ctx: context });
+    isolationScope.setClient(client);
+
+    addCloudResourceContext(isolationScope);
+
+    return startSpan(
+      {
+        op: 'faas.queue',
+        name: `process ${batch.queue}`,
+        attributes: {
+          'faas.trigger': 'pubsub',
+          'messaging.destination.name': batch.queue,
+          'messaging.system': 'cloudflare',
+          'messaging.operation.type': 'process',
+          'messaging.operation.name': 'process',
+          'messaging.batch.message_count': batch.messages.length,
+          'messaging.message.retry.count': batch.messages.reduce((acc, message) => acc + message.attempts - 1, 0),
+          [SEMANTIC_ATTRIBUTE_SENTRY_OP]: 'queue.process',
+          [SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN]: 'auto.faas.cloudflare.queue',
+          [SEMANTIC_ATTRIBUTE_SENTRY_SOURCE]: 'task',
+        },
+      },
+      async () => {
+        try {
+          return await fn();
+        } catch (e) {
+          captureException(e, { mechanism: { handled: false, type: 'auto.faas.cloudflare.queue' } });
+          throw e;
+        } finally {
+          waitUntil(flushAndDispose(client));
+        }
+      },
+    );
+  });
+}
+
+/**
+ * Instruments a queue handler for ExportedHandler (env/ctx come from args).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function instrumentExportedHandlerQueue(
+  handler,
+  optionsCallback,
+) {
+  if (!('queue' in handler) || typeof handler.queue !== 'function') {
+    return;
+  }
+
+  handler.queue = ensureInstrumented(
+    handler.queue,
+    original =>
+      new Proxy(original, {
+        apply(target, thisArg, args) {
+          const [batch, env, ctx] = args;
+          const context = instrumentContext(ctx);
+          const options = getFinalOptions(optionsCallback(env), env);
+          args[1] = instrumentEnv(env, options);
+          args[2] = context;
+
+          return wrapQueueHandler(batch, options, context, () => target.apply(thisArg, args));
+        },
+      }),
+  );
+}
+
+/**
+ * Instruments a queue method for WorkerEntrypoint (options/context already available).
+ */
+function instrumentWorkerEntrypointQueue(
+  instance,
+  options,
+  context,
+) {
+  if (!instance.queue) {
+    return;
+  }
+
+  const original = instance.queue.bind(instance);
+  instance.queue = new Proxy(original, {
+    apply(target, thisArg, args) {
+      const [batch] = args;
+
+      return wrapQueueHandler(batch, options, context, () => Reflect.apply(target, thisArg, args));
+    },
+  });
+}
+
+export { instrumentExportedHandlerQueue, instrumentWorkerEntrypointQueue };
+//# sourceMappingURL=instrumentQueue.js.map

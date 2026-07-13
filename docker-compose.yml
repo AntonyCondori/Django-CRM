@@ -39,7 +39,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: /bin/bash /entrypoint.sh
+    # Esta es la línea clave que mantiene vivo al servidor
+    command: python manage.py runserver 0.0.0.0:8000
 
   celery-worker:
     build:

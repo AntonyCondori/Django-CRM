@@ -79,6 +79,7 @@ CLAUDE.md
 TODO.md
 .playwright-mcp
 .superpowers/
+credenciales.json
 
 # node
 node_modules/

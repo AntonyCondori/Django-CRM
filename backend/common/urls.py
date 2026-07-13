@@ -9,6 +9,7 @@ from common.views.auth_views import (
     OrgAwareTokenRefreshView,
     OrgSwitchView,
     GoogleLoginInitiateView,
+    GoogleCalendarEventsView,
 )
 from common.views.custom_field_views import (
     CustomFieldDefinitionDetailView,
@@ -58,6 +59,7 @@ urlpatterns = [
     path("auth/google/conectar/", GoogleLoginInitiateView.as_view(), name="conectar_google"),
     # Google OAuth callback with PKCE (secure implementation)
     path("auth/google/callback/", GoogleOAuthCallbackView.as_view()),
+    path('auth/google/eventos/', GoogleCalendarEventsView.as_view(), name='google_eventos'),
     # Google ID token auth for mobile apps
     path("auth/google/", GoogleIdTokenView.as_view(), name="google_id_token"),
     # Magic link (passwordless) authentication

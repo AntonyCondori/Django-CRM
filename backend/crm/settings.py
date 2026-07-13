@@ -299,9 +299,13 @@ SWAGGER_SETTINGS = {
     },
 }
 
-CORS_ALLOW_HEADERS = default_headers + ("org",)
-# Security: CORS configuration via environment variables
-CORS_ORIGIN_ALLOW_ALL = os.environ.get("CORS_ALLOW_ALL", "False").lower() == "true"
+CORS_ALLOW_HEADERS = default_headers + ("org", "x-org-id",)
+
+# 1. APAGAMOS EL COMODÍN GLOBAL ESTRICTAMENTE
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ORIGIN_ALLOW_ALL = False 
+
+# 2. DEFINIMOS LOS ORÍGENES PERMITIDOS (Mantenemos tu lógica de variables de entorno)
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
@@ -309,9 +313,16 @@ CORS_ALLOWED_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
+
+# 3. PERMITIMOS EL PASO DE CREDENCIALES/TOKENS (VITAL PARA TU ERROR)
+CORS_ALLOW_CREDENTIALS = True
 # Security: CSRF trusted origins via environment variable
 _csrf_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(",") if o.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() 
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "http://localhost:5173").split(",")
+    if origin.strip()
+]
 
 # Security: HSTS with 1 year duration (recommended minimum)
 SECURE_HSTS_SECONDS = 31536000  # 1 year

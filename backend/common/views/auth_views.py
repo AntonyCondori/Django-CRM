@@ -20,7 +20,9 @@ from common import serializer
 from common.models import Org, Profile, User
 from common.serializer import OrgAwareRefreshToken
 from accounts.models import GoogleCalendarToken
-
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request as GoogleRequest
+import datetime
 import os
 from django.shortcuts import redirect
 from google_auth_oauthlib.flow import Flow
@@ -710,12 +712,93 @@ class GoogleOAuthCallbackView(APIView):
                     'expires_at': credentials.expiry,
                 }
             )
-            mensaje_guardado = "Tokens guardados correctamente en la base de datos."
+            return redirect('http://localhost:5173/profile?status=success')
         else:
-            mensaje_guardado = "¡OJO! No hay usuario logueado, los tokens NO se guardaron."
+            return redirect('http://localhost:5173/profile?status=success')
 
-        return Response({
-            "mensaje": "¡Integración con Google Calendar exitosa!",
-            "estado_db": mensaje_guardado,
-            "access_token": credentials.token,
-        })
+
+class GoogleCalendarEventsView(APIView):
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def _get_valid_credentials(self, user):
+        """Método auxiliar para refrescar tokens de forma segura"""
+        try:
+            token_obj = GoogleCalendarToken.objects.get(user=user)
+        except GoogleCalendarToken.DoesNotExist:
+            return None, Response({"error": "No hay conexión con Google."}, status=status.HTTP_404_NOT_FOUND)
+
+        creds = Credentials(
+            token=token_obj.access_token,
+            refresh_token=token_obj.refresh_token,
+            token_uri='https://oauth2.googleapis.com/token',
+            client_id=settings.GOOGLE_CLIENT_ID,
+            client_secret=settings.GOOGLE_CLIENT_SECRET,
+            scopes=['https://www.googleapis.com/auth/calendar']
+        )
+
+        if creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(GoogleRequest())
+                token_obj.access_token = creds.token
+                token_obj.expires_at = creds.expiry
+                token_obj.save()
+            except Exception as e:
+                print(f"Error al refrescar: {str(e)}") #
+                return None, Response({"error": "Sesión expirada."}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        return creds, None
+
+    def get(self, request):
+        creds, error = self._get_valid_credentials(request.user)
+        if error: return error
+
+        headers = {'Authorization': f'Bearer {creds.token}'}
+        url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?orderBy=startTime&singleEvents=true"
+        response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            return Response(
+                {"error": "Fallo al obtener eventos de Google", "details": response.json()},
+                status=response.status_code
+            )
+
+        google_data = response.json()
+        eventos = []
+        for item in google_data.get("items", []):
+            start = item.get("start", {})
+            eventos.append({
+                "titulo": item.get("summary", "Sin título"),
+                "inicio": start.get("dateTime") or start.get("date"),
+                "enlace": item.get("htmlLink"),
+            })
+
+        return Response({"eventos": eventos}, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """Versión corregida del POST usando la lógica de tokens centralizada"""
+        creds, error = self._get_valid_credentials(request.user)
+        if error: return error
+
+        summary = request.data.get('summary')
+        start_time = request.data.get('start_time')
+        end_time = request.data.get('end_time')
+
+        google_payload = {
+            "summary": summary,
+            "start": {"dateTime": start_time, "timeZone": "America/Lima"},
+            "end": {"dateTime": end_time, "timeZone": "America/Lima"}
+        }
+
+        headers = {
+            "Authorization": f"Bearer {creds.token}", #
+            "Content-Type": "application/json"
+        }
+        
+        google_url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+        response = requests.post(google_url, json=google_payload, headers=headers)
+
+        if response.status_code in [200, 201]:
+            return Response({"message": "Evento creado con éxito"}, status=status.HTTP_201_CREATED)
+        return Response({"error": "Fallo en Google API", "details": response.json()}, status=response.status_code)
+        

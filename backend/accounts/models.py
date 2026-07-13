@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from simple_history.models import HistoricalRecords
 
 from common.base import AssignableMixin, BaseModel
 from common.models import Org, Profile, Tags, Teams
@@ -23,6 +24,7 @@ class Account(AssignableMixin, BaseModel):
     Account model for CRM - Streamlined for modern sales workflow
     Based on Twenty CRM and Salesforce patterns
     """
+    history = HistoricalRecords()
 
     # Core Account Information
     name = models.CharField(_("Account Name"), max_length=255)

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "orders",
     "business_hours",
     "macros",
+    "simple_history",
     # "teams",  # Merged into common app
 ]
 
@@ -55,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",  # CSRF protection
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -264,23 +266,23 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "PREPROCESSING_HOOKS": ["common.custom_openapi.preprocessing_filter_spec"],
-    "ENUM_NAME_OVERRIDES": {
-        # Role enums
-        "ProfileRoleEnum": "common.utils.ROLES",
-        "BoardMemberRoleEnum": "tasks.models.BoardMember.ROLE_CHOICES",
-        # Priority enums
-        "TaskPriorityEnum": "tasks.models.Task.PRIORITY_CHOICES",
-        "CasePriorityEnum": "common.utils.PRIORITY_CHOICE",
-        "BoardTaskPriorityEnum": "tasks.models.BoardTask.PRIORITY_CHOICES",
-        # Status enums
-        "TaskStatusEnum": "tasks.models.Task.STATUS_CHOICES",
-        "CaseStatusEnum": "common.utils.STATUS_CHOICE",
-        "SolutionStatusEnum": "cases.models.Solution.STATUS_CHOICES",
-        "DocumentStatusEnum": "common.models.Document.DOCUMENT_STATUS_CHOICE",
-        "InvoiceStatusEnum": "invoices.models.Invoice.INVOICE_STATUS",
-        "ContactFormStatusEnum": "common.models.ContactFormSubmission.STATUS_CHOICES",
-        "LeadStatusEnum": "common.utils.LEAD_STATUS",
-    },
+    # "ENUM_NAME_OVERRIDES": {
+    #     # Role enums
+    #     "ProfileRoleEnum": "common.utils.ROLES",
+    #     "BoardMemberRoleEnum": "tasks.models.BoardMember.ROLE_CHOICES",
+    #     # Priority enums
+    #     "TaskPriorityEnum": "tasks.models.Task.PRIORITY_CHOICES",
+    #     "CasePriorityEnum": "common.utils.PRIORITY_CHOICE",
+    #     "BoardTaskPriorityEnum": "tasks.models.BoardTask.PRIORITY_CHOICES",
+    #     # Status enums
+    #     "TaskStatusEnum": "tasks.models.Task.STATUS_CHOICES",
+    #     "CaseStatusEnum": "common.utils.STATUS_CHOICE",
+    #     "SolutionStatusEnum": "cases.models.Solution.STATUS_CHOICES",
+    #     "DocumentStatusEnum": "common.models.Document.DOCUMENT_STATUS_CHOICE",
+    #     "InvoiceStatusEnum": "invoices.models.Invoice.INVOICE_STATUS",
+    #     "ContactFormStatusEnum": "common.models.ContactFormSubmission.STATUS_CHOICES",
+    #     "LeadStatusEnum": "common.utils.LEAD_STATUS",
+    # },
 }
 
 # JWT_SETTINGS = {
@@ -364,3 +366,7 @@ SWAGGER_ROOT_URL = os.environ.get("SWAGGER_ROOT_URL", "http://localhost:8000")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
+
+# Configuración avanzada para Django Simple History con JWT y CRUM
+SIMPLE_HISTORY_REVERSE_RELATION_NAME = 'audit_log'
+SIMPLE_HISTORY_CURRENT_USER_GETTER = 'crum.get_current_user'

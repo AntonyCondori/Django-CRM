@@ -29,7 +29,9 @@ services:
       dockerfile: Dockerfile
     env_file: .env.docker
     volumes:
-      - ./backend:/app/src:ro
+      - ./backend:/app
+      - /app/.venv
+      - ./docker/backend/entrypoint.sh:/entrypoint.sh:ro
     ports:
       - "8000:8000"
     depends_on:
@@ -46,13 +48,14 @@ services:
       dockerfile: Dockerfile
     env_file: .env.docker
     volumes:
-      - ./backend:/app/src:ro
+      - ./backend:/app
+      - /app/.venv
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: /app/.venv/bin/celery -A crm worker --loglevel=info
+    command: uv run celery -A crm worker --loglevel=info
 
   celery-beat:
     build:
@@ -60,13 +63,14 @@ services:
       dockerfile: Dockerfile
     env_file: .env.docker
     volumes:
-      - ./backend:/app/src:ro
+      - ./backend:/app
+      - /app/.venv
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: /app/.venv/bin/celery -A crm beat --loglevel=info
+    command: uv run celery -A crm beat --loglevel=info
 
   frontend:
     build:

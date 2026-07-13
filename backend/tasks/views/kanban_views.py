@@ -102,6 +102,18 @@ class TaskKanbanView(APIView):
                 type=str,
             ),
         ],
+        responses={
+            200: inline_serializer(
+                name="TaskKanbanResponse",
+                fields={
+                    "mode": serializers.CharField(),
+                    "pipeline": TaskPipelineListSerializer(allow_null=True),
+                    "columns": serializers.ListField(child=serializers.JSONField()),
+                    "total_tasks": serializers.IntegerField(),
+                }
+            )
+        },
+        description="Retorna el mapa estructurado de columnas y tarjetas para renderizar la pizarra Kanban de tareas operativas."
     )
     def get(self, request):
         """Get kanban board data."""
@@ -249,6 +261,19 @@ class TaskMoveView(APIView):
         tags=["Tasks Kanban"],
         operation_id="task_move",
         request=TaskMoveSerializer,
+        responses={
+            200: inline_serializer(
+                name="TaskMoveSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "task": TaskKanbanCardSerializer() # Mapea tu serializador importado
+                }
+            ),
+            400: inline_serializer(name="TaskMoveBadRequest", fields={"error": serializers.JSONField()}),
+            403: inline_serializer(name="TaskMoveForbidden", fields={"error": serializers.CharField()})
+        },
+        description="Actualiza la posición e índice de ordenamiento de una tarea operativa dentro del Kanban al arrastrar la tarjeta."
     )
     @transaction.atomic
     def patch(self, request, pk):
@@ -624,10 +649,20 @@ class TaskStageReorderView(APIView):
 
     @extend_schema(
         tags=["Task Stages"],
+        operation_id="tasks_stages_reorder",
         request=inline_serializer(
             name="TaskStageReorderRequest",
             fields={"stage_ids": serializers.ListField(child=serializers.UUIDField())},
         ),
+        responses={
+            200: inline_serializer(
+                name="TaskStageReorderSuccessResponse",
+                fields={"message": serializers.CharField()}
+            ),
+            400: inline_serializer(name="TaskStageReorderBadRequest", fields={"error": serializers.CharField()}),
+            403: inline_serializer(name="TaskStageReorderForbidden", fields={"error": serializers.CharField()})
+        },
+        description="Reordena de forma masiva e indexada el orden secuencial de las columnas/etapas de un pipeline de tareas específico."
     )
     @transaction.atomic
     def post(self, request, pipeline_pk):

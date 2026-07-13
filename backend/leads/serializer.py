@@ -345,3 +345,34 @@ class LeadMoveSerializer(serializers.Serializer):
                 "Either stage_id or status must be provided"
             )
         return attrs
+
+class LeadHistorySerializer(serializers.Serializer):
+    history_id = serializers.IntegerField()
+    history_date = serializers.DateTimeField()
+    history_type = serializers.CharField()
+    history_user = serializers.SerializerMethodField()
+    changes = serializers.SerializerMethodField()
+
+    def get_history_user(self, obj):
+        # Devuelve el correo electrónico del usuario si existe
+        return obj.history_user.email if obj.history_user else "Sistema/Anónimo"
+
+    def get_history_type(self, obj):
+        # Mapea los símbolos técnicos a palabras amigables para el Frontend
+        mapping = {'+': 'Creación', '~': 'Modificación', '-': 'Eliminación'}
+        return mapping.get(obj.history_type, obj.history_type)
+
+    def get_changes(self, obj):
+        # Compara esta versión con la anterior y extrae los cambios exactos
+        changes_list = []
+        if obj.prev_record:
+            delta = obj.diff_against(obj.prev_record)
+            for change in delta.changes:
+                changes_list.append({
+                    "field": change.field,
+                    "old": change.old,
+                    "new": change.new
+                })
+        else:
+            changes_list.append({"field": "Todos", "old": None, "new": "Registro inicial creado"})
+        return changes_list

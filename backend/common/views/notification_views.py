@@ -22,7 +22,8 @@ from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer, OpenApiParameter
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import BaseRenderer
 from rest_framework.response import Response
@@ -57,6 +58,26 @@ class NotificationListView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Notifications"],
+        operation_id="notifications_list",
+        parameters=[
+            OpenApiParameter("unread", str, description="Filtrar solo no leídas ('true'/'false')", required=False),
+            OpenApiParameter("since", str, description="Filtrar notificaciones creadas después de esta fecha ISO", required=False),
+            OpenApiParameter("limit", int, description="Máximo de resultados a retornar (por defecto 20)", required=False),
+        ],
+        responses={
+            200: inline_serializer(
+                name="NotificationListResponse",
+                fields={
+                    "count": serializers.IntegerField(),
+                    "unread_count": serializers.IntegerField(),
+                    "results": NotificationSerializer(many=True) # Mapeo de tu serializador importado
+                }
+            )
+        },
+        description="Obtiene el listado paginado y filtrado de las notificaciones del usuario autenticado."
+    )
     def get(self, request, *args, **kwargs):
         params = request.query_params
         qs = _user_qs(request)
@@ -83,11 +104,18 @@ class NotificationListView(APIView):
         )
 
 
+@extend_schema(exclude=True)
 class NotificationReadView(APIView):
     """POST /api/notifications/<id>/read/"""
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Notifications"],
+        operation_id="notifications_mark_as_read",
+        responses={204: None},
+        description="Marca una única notificación específica como leída de forma idempotente."
+    )
     def post(self, request, pk, *args, **kwargs):
         notif = get_object_or_404(_user_qs(request), pk=pk)
         if notif.read_at is None:
@@ -101,6 +129,16 @@ class NotificationReadAllView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Notifications"],
+        operation_id="notifications_mark_all_as_read",
+        request=inline_serializer(
+            name="NotificationReadAllRequest",
+            fields={"before": serializers.CharField(required=False, allow_null=True)}
+        ),
+        responses={204: None},
+        description="Marca de forma masiva todas las notificaciones (o las anteriores a una fecha) como leídas."
+    )
     def post(self, request, *args, **kwargs):
         before = request.data.get("before") if isinstance(request.data, dict) else None
         cutoff = parse_datetime(before) if before else timezone.now()
@@ -117,6 +155,12 @@ class NotificationDetailView(APIView):
 
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(
+        tags=["Notifications"],
+        operation_id="notifications_destroy",
+        responses={204: None},
+        description="Elimina de forma permanente una notificación del historial del usuario."
+    )
     def delete(self, request, pk, *args, **kwargs):
         notif = get_object_or_404(_user_qs(request), pk=pk)
         notif.delete()
@@ -266,6 +310,12 @@ class NotificationStreamView(APIView):
     permission_classes = (IsAuthenticated,)
     renderer_classes = (_EventStreamRenderer,)
 
+    @extend_schema(
+        tags=["Notifications"],
+        operation_id="notifications_sse_stream",
+        responses={200: serializers.CharField()}, # Informa a Swagger el canal de transmisión plana/stream SSE
+        description="Abre un canal Server-Sent Events (SSE) en tiempo real para recibir nuevas notificaciones."
+    )
     def get(self, request, *args, **kwargs):
         org_id = request.profile.org_id
         profile_id = request.profile.id

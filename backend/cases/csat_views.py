@@ -16,7 +16,8 @@ from datetime import timedelta
 from django.core.signing import BadSignature, SignatureExpired
 from django.db.models import Avg, Count
 from django.utils import timezone
-from rest_framework import status as drf_status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status as drf_status, serializers
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -66,6 +67,27 @@ class PublicCsatView(APIView):
     permission_classes = (AllowAny,)
     authentication_classes: list = []  # No JWT/session/csrf needed.
 
+    @extend_schema(
+        tags=["Public CSAT Surveys"],
+        operation_id="cases_public_csat_retrieve",
+        responses={
+            200: inline_serializer(
+                name="PublicCsatRetrieveResponse",
+                fields={
+                    "case_subject": serializers.CharField(),
+                    "org_name": serializers.CharField(),
+                    "agent_name": serializers.CharField(),
+                    "rating": serializers.IntegerField(allow_null=True),
+                    "comment": serializers.CharField(allow_null=True),
+                    "responded_at": serializers.CharField(allow_null=True),
+                    "edit_window_closes_at": serializers.CharField(allow_null=True),
+                }
+            ),
+            410: inline_serializer(name="PublicCsatExpired", fields={"error": serializers.CharField()}),
+            400: inline_serializer(name="PublicCsatInvalid", fields={"error": serializers.CharField()})
+        },
+        description="Recupera de forma anónima los metadatos del caso para renderizar la encuesta de satisfacción del cliente."
+    )
     def get(self, request, token: str):
         survey, status, err = _load_survey(token)
         if survey is None:
@@ -95,6 +117,31 @@ class PublicCsatView(APIView):
             }
         )
 
+    @extend_schema(
+        tags=["Public CSAT Surveys"],
+        operation_id="cases_public_csat_create",
+        request=inline_serializer(
+            name="PublicCsatCreateRequest",
+            fields={
+                "rating": serializers.IntegerField(help_text="Entero del 1 al 5"),
+                "comment": serializers.CharField(required=False, allow_blank=True)
+            }
+        ),
+        responses={
+            200: inline_serializer(
+                name="PublicCsatCreateResponse",
+                fields={
+                    "rating": serializers.IntegerField(),
+                    "comment": serializers.CharField(allow_blank=True),
+                    "responded_at": serializers.CharField()
+                }
+            ),
+            400: inline_serializer(name="PublicCsatBadRequest", fields={"error": serializers.CharField()}),
+            409: inline_serializer(name="PublicCsatLocked", fields={"error": serializers.CharField()}),
+            410: inline_serializer(name="PublicCsatPostExpired", fields={"error": serializers.CharField()})
+        },
+        description="Registra o edita (dentro de las primeras 24 horas) la calificación CSAT enviada por el cliente."
+    )
     def post(self, request, token: str):
         survey, status, err = _load_survey(token)
         if survey is None:
@@ -147,6 +194,24 @@ class CsatAggregateView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
+    @extend_schema(
+        tags=["Cases Analytics"],
+        operation_id="cases_csat_aggregate",
+        responses={
+            200: inline_serializer(
+                name="CsatAggregateResponse",
+                fields={
+                    "average": serializers.FloatField(allow_null=True),
+                    "count": serializers.IntegerField(),
+                    "distribution": inline_serializer(
+                        name="CsatDistribution",
+                        fields={str(i): serializers.IntegerField() for i in range(1, 6)}
+                    )
+                }
+            )
+        },
+        description="Calcula el promedio de satisfacción (CSAT), total de encuestas y distribución por estrellas para el tablero analítico."
+    )
     def get(self, request):
         org = request.profile.org
         responded = CsatSurvey.objects.filter(

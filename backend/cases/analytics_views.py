@@ -17,7 +17,8 @@ from uuid import UUID
 
 from django.db.models import Q
 from django.http import StreamingHttpResponse
-from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.utils import extend_schema, OpenApiParameter, inline_serializer
+from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -98,35 +99,75 @@ class _AnalyticsBaseView(APIView):
 
 
 class AnalyticsFrtView(_AnalyticsBaseView):
-    @extend_schema(tags=["cases-analytics"], parameters=_FILTER_PARAMS)
+    @extend_schema(
+        tags=["cases-analytics"], 
+        parameters=_FILTER_PARAMS,
+        responses={200: inline_serializer(
+            name="AnalyticsFrtResponse",
+            fields={"average_frt_hours": serializers.FloatField(), "total_cases": serializers.IntegerField()}
+        )},
+        description="Calcula el Tiempo de Primera Respuesta (FRT) promedio dentro del rango seleccionado."
+    )
     def get(self, request):
         qs, from_dt, to_dt = _filtered_qs(request)
         return Response(analytics.compute_frt(qs, from_dt, to_dt))
 
 
 class AnalyticsMttrView(_AnalyticsBaseView):
-    @extend_schema(tags=["cases-analytics"], parameters=_FILTER_PARAMS)
+    @extend_schema(
+        tags=["cases-analytics"], 
+        parameters=_FILTER_PARAMS,
+        responses={200: inline_serializer(
+            name="AnalyticsMttrResponse",
+            fields={"average_mttr_hours": serializers.FloatField(), "resolved_cases": serializers.IntegerField()}
+        )},
+        description="Calcula el Tiempo Medio de Resolución (MTTR) de los casos cerrados."
+    )
     def get(self, request):
         qs, from_dt, to_dt = _filtered_qs(request)
         return Response(analytics.compute_mttr(qs, from_dt, to_dt))
 
 
 class AnalyticsBacklogView(_AnalyticsBaseView):
-    @extend_schema(tags=["cases-analytics"], parameters=_FILTER_PARAMS)
+    @extend_schema(
+        tags=["cases-analytics"], 
+        parameters=_FILTER_PARAMS,
+        responses={200: inline_serializer(
+            name="AnalyticsBacklogResponse",
+            fields={"open_cases": serializers.IntegerField(), "backlog_trend": serializers.ListField(child=serializers.IntegerField())}
+        )},
+        description="Calcula el volumen actual de casos pendientes acumulados (Backlog)."
+    )
     def get(self, request):
         qs, from_dt, to_dt = _filtered_qs(request)
         return Response(analytics.compute_backlog(qs, from_dt, to_dt))
 
 
 class AnalyticsAgentsView(_AnalyticsBaseView):
-    @extend_schema(tags=["cases-analytics"], parameters=_FILTER_PARAMS)
+    @extend_schema(
+        tags=["cases-analytics"], 
+        parameters=_FILTER_PARAMS,
+        responses={200: inline_serializer(
+            name="AnalyticsAgentsResponse",
+            fields={"results": serializers.ListField(child=serializers.JSONField())}
+        )},
+        description="Obtiene el desglose de rendimiento estadístico por cada agente de soporte."
+    )
     def get(self, request):
         qs, from_dt, to_dt = _filtered_qs(request)
         return Response({"results": analytics.compute_agents(qs, from_dt, to_dt)})
 
 
 class AnalyticsSlaView(_AnalyticsBaseView):
-    @extend_schema(tags=["cases-analytics"], parameters=_FILTER_PARAMS)
+    @extend_schema(
+        tags=["cases-analytics"], 
+        parameters=_FILTER_PARAMS,
+        responses={200: inline_serializer(
+            name="AnalyticsSlaResponse",
+            fields={"sla_compliance_rate": serializers.FloatField(), "breached_count": serializers.IntegerField()}
+        )},
+        description="Mide el porcentaje de cumplimiento de los acuerdos de nivel de servicio (SLA)."
+    )
     def get(self, request):
         qs, from_dt, to_dt = _filtered_qs(request)
         return Response(analytics.compute_sla(qs, from_dt, to_dt))
@@ -139,11 +180,18 @@ class AnalyticsSlaView(_AnalyticsBaseView):
 class AnalyticsDrilldownView(_AnalyticsBaseView):
     @extend_schema(
         tags=["cases-analytics"],
-        parameters=_FILTER_PARAMS
-        + [
+        parameters=_FILTER_PARAMS + [
             OpenApiParameter("metric", str, required=True),
             OpenApiParameter("bucket", str, description="Bucket selector (metric-specific)"),
         ],
+        responses={200: inline_serializer(
+            name="AnalyticsDrilldownResponse",
+            fields={
+                "count": serializers.IntegerField(),
+                "results": CaseSerializer(many=True) # 🌟 Mapeo seguro usando tu serializador importado
+            }
+        )},
+        description="Explora en detalle los casos específicos que componen un bloque o métrica analítica."
     )
     def get(self, request):
         metric = request.query_params.get("metric", "")
@@ -190,17 +238,13 @@ def _iso_or_blank(value) -> str:
 class AnalyticsExportView(_AnalyticsBaseView):
     @extend_schema(
         tags=["cases-analytics"],
-        parameters=_FILTER_PARAMS
-        + [
+        parameters=_FILTER_PARAMS + [
             OpenApiParameter("metric", str, required=True),
             OpenApiParameter("bucket", str),
-            OpenApiParameter(
-                "fmt",
-                str,
-                description="csv (only). Named `fmt` to avoid colliding with DRF's "
-                "`?format=` content-negotiation kwarg, which would 404 the endpoint.",
-            ),
+            OpenApiParameter("fmt", str, description="csv (only)."),
         ],
+        responses={200: serializers.CharField()}, # 🌟 Define la salida de texto plano/stream para el CSV
+        description="Exporta un reporte crudo en formato de archivo de texto CSV para análisis externo."
     )
     def get(self, request):
         metric = request.query_params.get("metric", "")

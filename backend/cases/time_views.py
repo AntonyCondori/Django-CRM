@@ -23,6 +23,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -48,7 +49,10 @@ def _visible_entry_qs(profile):
         qs = qs.filter(profile=profile)
     return qs.select_related("profile", "profile__user", "case")
 
-
+@extend_schema(
+    responses={200: TimeEntrySerializer(many=True)},
+    description="Obtiene la lista de todas las entradas de tiempo asociadas a un caso."
+)
 class TimeEntryListCreateView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
@@ -59,6 +63,11 @@ class TimeEntryListCreateView(APIView):
         )
         return Response(TimeEntrySerializer(entries, many=True).data)
 
+    @extend_schema(
+        request=TimeEntryCreateSerializer,
+        responses={201: TimeEntrySerializer},
+        description="Registra una nueva entrada de tiempo de forma manual para el caso."
+    )
     def post(self, request, pk):
         case = get_object_or_404(Case, id=pk, org=request.profile.org)
         serializer = TimeEntryCreateSerializer(data=request.data)
@@ -81,7 +90,11 @@ class TimeEntryListCreateView(APIView):
             TimeEntrySerializer(entry).data, status=status.HTTP_201_CREATED
         )
 
-
+@extend_schema(
+    request=None,  # No requiere un cuerpo complejo, solo el disparo del endpoint
+    responses={201: TimeEntrySerializer},
+    description="Inicia un cronómetro activo de tiempo para el caso especificado."
+)
 class TimeEntryStartView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
@@ -120,7 +133,10 @@ class TimeEntryStartView(APIView):
             TimeEntrySerializer(entry).data, status=status.HTTP_201_CREATED
         )
 
-
+@extend_schema(
+    responses={200: TimeEntrySerializer},  # Al compartir la estructura de CaseSerializer.time_summary, mapea la salida
+    description="Obtiene el resumen total de minutos acumulados y el desglose por desarrollador."
+)
 class TimeSummaryView(APIView):
     """``GET /api/cases/<pk>/time-summary/`` — totals + per-profile breakdown.
 
@@ -177,6 +193,11 @@ class TimeEntryDetailView(APIView):
             return False  # Sentinel: row exists but caller is not authorized.
         return entry
 
+    @extend_schema(
+        request=TimeEntryUpdateSerializer,
+        responses={200: TimeEntrySerializer},
+        description="Actualiza los campos permitidos de un registro de tiempo específico."
+    )
     def put(self, request, pk):
         entry = self._get_entry(request, pk)
         if entry is None:
@@ -196,6 +217,10 @@ class TimeEntryDetailView(APIView):
         entry.save()
         return Response(TimeEntrySerializer(entry).data)
 
+    @extend_schema(
+        responses={24: None},
+        description="Elimina definitivamente un registro de tiempo si no ha sido facturado."
+    )
     def delete(self, request, pk):
         entry = self._get_entry(request, pk)
         if entry is None:
@@ -215,7 +240,11 @@ class TimeEntryDetailView(APIView):
         entry.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-
+@extend_schema(
+    request=None,
+    responses={200: TimeEntrySerializer},
+    description="Detiene un temporizador activo asignándole la marca de tiempo de finalización actual."
+)
 class TimeEntryStopView(APIView):
     """``POST /api/time-entries/<pk>/stop/`` — stop a running timer."""
 
@@ -246,7 +275,10 @@ class TimeEntryStopView(APIView):
         entry.save()
         return Response(TimeEntrySerializer(entry).data)
 
-
+@extend_schema(
+    responses={200: TimeEntrySerializer(many=True)},
+    description="Lista los registros de tiempo completados y pendientes por facturar de una cuenta."
+)
 class UnbilledEntriesView(APIView):
     """``GET /api/time-entries/unbilled/?account=<uuid>`` — list billable,
     stopped, not-yet-invoiced entries for an account so the invoice picker
@@ -266,7 +298,10 @@ class UnbilledEntriesView(APIView):
             qs = qs.filter(case__account_id=account_id)
         return Response(TimeEntrySerializer(qs, many=True).data)
 
-
+@extend_schema(
+    responses={200: TimeEntrySerializer(many=True)},
+    description="Genera la estructura de hoja de tiempos semanal agrupada en bloques por día."
+)
 class TimesheetView(APIView):
     """``GET /api/time-entries/timesheet/?profile=<id>&start=<date>&end=<date>``.
 

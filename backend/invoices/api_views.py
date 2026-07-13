@@ -10,12 +10,14 @@ from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.http import HttpResponse
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema
-from rest_framework import status
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status, serializers
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 
 from common.custom_fields import validate_payload as validate_custom_fields_payload
 from common.models import Attachments, Comment, CustomFieldDefinition
@@ -165,7 +167,11 @@ class InvoiceListView(APIView, LimitOffsetPagination):
 
         return queryset
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_list")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_list",
+        responses={200: InvoiceListSerializer(many=True)}
+    )
     def get(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
         results = self.paginate_queryset(queryset, request, view=self)
@@ -180,7 +186,12 @@ class InvoiceListView(APIView, LimitOffsetPagination):
             }
         )
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_create")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_create",
+        request=InvoiceCreateSerializer,                 
+        responses={201: InvoiceSerializer}               
+    )
     def post(self, request, *args, **kwargs):
         cf_payload = request.data.get("custom_fields")
         if isinstance(cf_payload, str):
@@ -258,7 +269,25 @@ class InvoiceDetailView(APIView):
                 return False
         return True
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_retrieve")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_retrieve",
+        responses={
+            200: inline_serializer(
+                name="InvoiceDetailCompositeResponse",
+                fields={
+                    "invoice": InvoiceSerializer(),
+                    "attachments": AttachmentsSerializer(many=True),
+                    "comments": CommentSerializer(many=True),
+                    "history": InvoiceHistorySerializer(many=True),
+                    "custom_field_definitions": CustomFieldDefinitionSerializer(many=True)
+                }
+            ),
+            403: inline_serializer(name="InvoiceRetrieveForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceRetrieveNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Recupera la ficha completa de una factura conteniendo su historial, comentarios y archivos adjuntos corporativos."
+    )
     def get(self, request, pk, format=None):
         invoice = self.get_object(pk)
         if not invoice:
@@ -306,7 +335,25 @@ class InvoiceDetailView(APIView):
             }
         )
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_update")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_update",
+        request=InvoiceCreateSerializer,
+        responses={
+            200: inline_serializer(
+                name="InvoiceUpdateSuccessCompositeResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "invoice": InvoiceSerializer()
+                }
+            ),
+            400: inline_serializer(name="InvoiceUpdateBadRequest", fields={"error": serializers.BooleanField(), "errors": serializers.JSONField()}),
+            403: inline_serializer(name="InvoiceUpdateForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceUpdateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Actualiza la información comercial de la factura y registra la bitácora en el historial de cambios."
+    )
     def put(self, request, pk, format=None):
         invoice = self.get_object(pk)
         if not invoice:
@@ -375,12 +422,27 @@ class InvoiceDetailView(APIView):
         )
 
 
-class InvoiceSendView(APIView):
+class InvoiceSendView(GenericAPIView):
     """Send invoice to client via email"""
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_send")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_send",
+        responses={
+            200: inline_serializer(
+                name="InvoiceSendSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField()
+                }
+            ),
+            404: inline_serializer(name="InvoiceSendNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Envía la notificación y el comprobante de la factura al cliente vía correo electrónico utilizando tareas en segundo plano."
+    )
     def post(self, request, pk):
         invoice = Invoice.objects.filter(id=pk, org=request.profile.org).first()
         if not invoice:
@@ -412,7 +474,32 @@ class InvoiceMarkPaidView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_mark_paid")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_mark_paid",
+        request=inline_serializer(
+            name="InvoiceMarkPaidRequest",
+            fields={
+                "amount": serializers.DecimalField(max_digits=12, decimal_places=2, required=False),
+                "payment_method": serializers.CharField(required=False),
+                "payment_date": serializers.DateField(required=False),
+                "reference_number": serializers.CharField(required=False, allow_blank=True),
+                "notes": serializers.CharField(required=False, allow_blank=True)
+            }
+        ),
+        responses={
+            200: inline_serializer(
+                name="InvoiceMarkPaidSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "invoice": InvoiceListSerializer() # Cambiado a la estructura fija que lee el CRM
+                }
+            ),
+            404: inline_serializer(name="InvoiceMarkPaidNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Registra un cobro sobre la factura y actualiza de forma automática su estado financiero a pagada."
+    )
     def post(self, request, pk):
         invoice = Invoice.objects.filter(id=pk, org=request.profile.org).first()
         if not invoice:
@@ -448,12 +535,28 @@ class InvoiceMarkPaidView(APIView):
         )
 
 
-class InvoiceDuplicateView(APIView):
+class InvoiceDuplicateView(GenericAPIView):
     """Duplicate an existing invoice"""
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_duplicate")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_duplicate",
+        responses={
+            201: inline_serializer(
+                name="InvoiceDuplicateSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "invoice": InvoiceSerializer()
+                }
+            ),
+            404: inline_serializer(name="InvoiceDuplicateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Clona una factura existente con todos sus elementos de línea en estado de Borrador (Draft)."
+    )
     def post(self, request, pk):
         original = Invoice.objects.filter(id=pk, org=request.profile.org).first()
         if not original:
@@ -530,12 +633,30 @@ class InvoiceDuplicateView(APIView):
             )
 
 
-class InvoiceCancelView(APIView):
+class InvoiceCancelView(GenericAPIView):
     """Cancel an invoice"""
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_cancel")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_cancel",
+        responses={
+            200: inline_serializer(
+                name="InvoiceCancelSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "invoice": InvoiceSerializer()
+                }
+            ),
+            400: inline_serializer(name="InvoiceCancelInvalidState", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            403: inline_serializer(name="InvoiceCancelForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceCancelNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Cancela formalmente una factura emitida bloqueando transacciones posteriores sobre ella."
+    )
     def post(self, request, pk):
         invoice = Invoice.objects.filter(id=pk, org=request.profile.org).first()
         if not invoice:
@@ -589,7 +710,18 @@ class InvoicePDFView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Invoices"], operation_id="invoices_pdf")
+    @extend_schema(
+        tags=["Invoices"], 
+        operation_id="invoices_pdf",
+        responses={
+            200: OpenApiTypes.BINARY, # Informa flujo stream/archivo binario plano para la descarga del PDF
+            403: inline_serializer(name="InvoicePdfDownloadForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoicePdfDownloadNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            503: inline_serializer(name="InvoicePdfDownloadUnavailable", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            500: inline_serializer(name="InvoicePdfDownloadError", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Compila estáticamente los datos financieros y descarga el archivo binario PDF de la factura de forma segura."
+    )
     def get(self, request, pk):
         invoice = Invoice.objects.filter(id=pk, org=request.profile.org).first()
         if not invoice:
@@ -646,7 +778,11 @@ class InvoiceLineItemListView(APIView):
             id=invoice_id, org=self.request.profile.org
         ).first()
 
-    @extend_schema(tags=["Invoice Line Items"], operation_id="line_items_list")
+    @extend_schema(
+        tags=["Invoice Line Items"], 
+        operation_id="line_items_list",
+        responses={200: InvoiceLineItemSerializer(many=True)}
+    )
     def get(self, request, invoice_id):
         invoice = self.get_invoice(invoice_id)
         if not invoice:
@@ -658,7 +794,12 @@ class InvoiceLineItemListView(APIView):
         line_items = invoice.line_items.all().order_by("order")
         return Response(InvoiceLineItemSerializer(line_items, many=True).data)
 
-    @extend_schema(tags=["Invoice Line Items"], operation_id="line_items_create")
+    @extend_schema(
+        tags=["Invoice Line Items"], 
+        operation_id="line_items_create",
+        request=InvoiceLineItemCreateSerializer,
+        responses={201: InvoiceLineItemSerializer}
+    )
     def post(self, request, invoice_id):
         invoice = self.get_invoice(invoice_id)
         if not invoice:
@@ -700,7 +841,12 @@ class InvoiceLineItemDetailView(APIView):
             id=pk, invoice_id=invoice_id, org=self.request.profile.org
         ).first()
 
-    @extend_schema(tags=["Invoice Line Items"], operation_id="line_items_update")
+    @extend_schema(
+        tags=["Invoice Line Items"], 
+        operation_id="line_items_update",
+        request=InvoiceLineItemCreateSerializer,
+        responses={200: InvoiceLineItemSerializer}
+    )
     def put(self, request, invoice_id, pk):
         line_item = self.get_object(invoice_id, pk)
         if not line_item:
@@ -732,7 +878,16 @@ class InvoiceLineItemDetailView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @extend_schema(tags=["Invoice Line Items"], operation_id="line_items_destroy")
+    @extend_schema(
+        tags=["Invoice Line Items"], 
+        operation_id="line_items_destroy",
+        responses={
+            200: inline_serializer(
+                name="InvoiceLineItemDeleteResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            )
+        }
+    )
     def delete(self, request, invoice_id, pk):
         line_item = self.get_object(invoice_id, pk)
         if not line_item:
@@ -764,7 +919,11 @@ class PaymentListView(APIView, LimitOffsetPagination):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Payments"], operation_id="payments_list")
+    @extend_schema(
+        tags=["Payments"], 
+        operation_id="payments_list",
+        responses={200: PaymentSerializer(many=True)}
+    )
     def get(self, request, invoice_id):
         invoice = Invoice.objects.filter(id=invoice_id, org=request.profile.org).first()
         if not invoice:
@@ -776,7 +935,22 @@ class PaymentListView(APIView, LimitOffsetPagination):
         payments = invoice.payments.all().order_by("-payment_date")
         return Response(PaymentSerializer(payments, many=True).data)
 
-    @extend_schema(tags=["Payments"], operation_id="payments_create")
+    @extend_schema(
+        tags=["Payments"], 
+        operation_id="payments_create",
+        request=PaymentCreateSerializer,
+        responses={
+            201: inline_serializer(
+                name="PaymentCreateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "payment": PaymentSerializer(),
+                    "invoice": InvoiceListSerializer()
+                }
+            )
+        }
+    )
     def post(self, request, invoice_id):
         invoice = Invoice.objects.filter(id=invoice_id, org=request.profile.org).first()
         if not invoice:
@@ -809,7 +983,24 @@ class PaymentDetailView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Payments"], operation_id="payments_destroy")
+    @extend_schema(
+        tags=["Payments"], 
+        operation_id="payments_destroy",
+        responses={
+            200: inline_serializer(
+                name="PaymentDeleteResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            ),
+            403: inline_serializer(
+                name="PaymentDeleteDeniedResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            ),
+            404: inline_serializer(
+                name="PaymentDeleteNotFoundResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            )
+        }
+    )
     def delete(self, request, invoice_id, pk):
         payment = (
             Payment.objects.filter(
@@ -854,7 +1045,21 @@ class ProductListView(APIView, LimitOffsetPagination):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Products"], operation_id="products_list")
+    @extend_schema(
+        tags=["Products"], 
+        operation_id="products_list",
+        responses={
+            200: inline_serializer(
+                name="ProductListResponse",
+                fields={
+                    "count": serializers.IntegerField(),
+                    "next": serializers.CharField(allow_null=True),
+                    "previous": serializers.CharField(allow_null=True),
+                    "results": ProductSerializer(many=True)
+                }
+            )
+        }
+    )
     def get(self, request):
         queryset = Product.objects.filter(org=request.profile.org)
 
@@ -886,7 +1091,21 @@ class ProductListView(APIView, LimitOffsetPagination):
             }
         )
 
-    @extend_schema(tags=["Products"], operation_id="products_create")
+    @extend_schema(
+        tags=["Products"], 
+        operation_id="products_create",
+        request=ProductCreateSerializer,
+        responses={
+            201: inline_serializer(
+                name="ProductCreateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "product": ProductSerializer()
+                }
+            )
+        }
+    )
     def post(self, request):
         serializer = ProductCreateSerializer(
             data=request.data, context={"request": request}
@@ -916,7 +1135,11 @@ class ProductDetailView(APIView):
     def get_object(self, pk):
         return Product.objects.filter(id=pk, org=self.request.profile.org).first()
 
-    @extend_schema(tags=["Products"], operation_id="products_retrieve")
+    @extend_schema(
+        tags=["Products"], 
+        operation_id="products_retrieve",
+        responses={200: ProductSerializer()}
+    )
     def get(self, request, pk):
         product = self.get_object(pk)
         if not product:
@@ -926,7 +1149,21 @@ class ProductDetailView(APIView):
             )
         return Response(ProductSerializer(product).data)
 
-    @extend_schema(tags=["Products"], operation_id="products_update")
+    @extend_schema(
+        tags=["Products"], 
+        operation_id="products_update",
+        request=ProductCreateSerializer,
+        responses={
+            200: inline_serializer(
+                name="ProductUpdateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "product": ProductSerializer()
+                }
+            )
+        }
+    )
     def put(self, request, pk):
         product = self.get_object(pk)
         if not product:
@@ -953,7 +1190,19 @@ class ProductDetailView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @extend_schema(tags=["Products"], operation_id="products_destroy")
+    @extend_schema(
+        tags=["Products"], 
+        operation_id="products_destroy",
+        responses={
+            200: inline_serializer(
+                name="ProductDeleteResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField()
+                }
+            )
+        }
+    )
     def delete(self, request, pk):
         product = self.get_object(pk)
         if not product:
@@ -994,7 +1243,21 @@ class EstimateListView(APIView, LimitOffsetPagination):
 
         return queryset
 
-    @extend_schema(tags=["Estimates"], operation_id="estimates_list")
+    @extend_schema(
+        tags=["Estimates"], 
+        operation_id="estimates_list",
+        responses={
+            200: inline_serializer(
+                name="EstimateListResponse",
+                fields={
+                    "count": serializers.IntegerField(),
+                    "next": serializers.CharField(allow_null=True),
+                    "previous": serializers.CharField(allow_null=True),
+                    "results": EstimateListSerializer(many=True)
+                }
+            )
+        }
+    )
     def get(self, request):
         queryset = self.get_queryset()
 
@@ -1031,7 +1294,21 @@ class EstimateListView(APIView, LimitOffsetPagination):
             }
         )
 
-    @extend_schema(tags=["Estimates"], operation_id="estimates_create")
+    @extend_schema(
+        tags=["Estimates"], 
+        operation_id="estimates_create",
+        request=EstimateCreateSerializer,
+        responses={
+            201: inline_serializer(
+                name="EstimateCreateSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "estimate": EstimateSerializer()
+                }
+            )
+        }
+    )
     def post(self, request):
         cf_payload = request.data.get("custom_fields")
         if isinstance(cf_payload, str):
@@ -1068,15 +1345,28 @@ class EstimateListView(APIView, LimitOffsetPagination):
         )
 
 
-class EstimateDetailView(APIView):
+class EstimateDetailView(GenericAPIView):
     """Retrieve, update, and delete an estimate"""
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
     def get_object(self, pk):
         return Estimate.objects.filter(id=pk, org=self.request.profile.org).first()
 
-    @extend_schema(tags=["Estimates"], operation_id="estimates_retrieve")
+    @extend_schema(
+        tags=["Estimates"], 
+        operation_id="estimates_retrieve",
+        responses={
+            200: inline_serializer(
+                name="EstimateDetailResponse",
+                fields={
+                    "estimate": EstimateSerializer(),
+                    "custom_field_definitions": CustomFieldDefinitionSerializer(many=True)
+                }
+            )
+        }
+    )
     def get(self, request, pk):
         estimate = self.get_object(pk)
         if not estimate:
@@ -1098,7 +1388,21 @@ class EstimateDetailView(APIView):
             }
         )
 
-    @extend_schema(tags=["Estimates"], operation_id="estimates_update")
+    @extend_schema(
+        tags=["Estimates"], 
+        operation_id="estimates_update",
+        request=EstimateCreateSerializer,
+        responses={
+            200: inline_serializer(
+                name="EstimateUpdateSuccessResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "estimate": EstimateSerializer()
+                }
+            )
+        }
+    )
     def put(self, request, pk):
         estimate = self.get_object(pk)
         if not estimate:
@@ -1166,12 +1470,26 @@ class EstimateDetailView(APIView):
         )
 
 
-class EstimateConvertView(APIView):
+class EstimateConvertView(GenericAPIView):
     """Convert an estimate to an invoice"""
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
-    @extend_schema(tags=["Estimates"], operation_id="estimates_convert")
+    @extend_schema(
+        tags=["Estimates"], 
+        operation_id="estimates_convert",
+        responses={
+            201: inline_serializer(
+                name="EstimateConvertResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "invoice": InvoiceSerializer()
+                }
+            )
+        }
+    )
     def post(self, request, pk):
         estimate = Estimate.objects.filter(id=pk, org=request.profile.org).first()
         if not estimate:
@@ -1249,12 +1567,22 @@ class EstimateConvertView(APIView):
         )
 
 
-class EstimateSendView(APIView):
+class EstimateSendView(GenericAPIView):
     """Send estimate to client via email"""
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
-    @extend_schema(tags=["Estimates"], operation_id="estimates_send")
+    @extend_schema(
+        tags=["Estimates"], 
+        operation_id="estimates_send",
+        responses={
+            200: inline_serializer(
+                name="EstimateSendResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            )
+        }
+    )
     def post(self, request, pk):
         estimate = Estimate.objects.filter(id=pk, org=request.profile.org).first()
         if not estimate:
@@ -1282,7 +1610,11 @@ class EstimatePDFView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Estimates"], operation_id="estimates_pdf")
+    @extend_schema(
+        tags=["Estimates"], 
+        operation_id="estimates_pdf",
+        responses={200: OpenApiTypes.BINARY} # Indica flujo plano de descarga binaria/stream
+    )
     def get(self, request, pk):
         estimate = Estimate.objects.filter(id=pk, org=request.profile.org).first()
         if not estimate:
@@ -1334,7 +1666,21 @@ class RecurringInvoiceListView(APIView, LimitOffsetPagination):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Recurring Invoices"], operation_id="recurring_list")
+    @extend_schema(
+        tags=["Recurring Invoices"], 
+        operation_id="recurring_list",
+        responses={
+            200: inline_serializer(
+                name="RecurringInvoiceListResponse",
+                fields={
+                    "count": serializers.IntegerField(),
+                    "next": serializers.CharField(allow_null=True),
+                    "previous": serializers.CharField(allow_null=True),
+                    "results": RecurringInvoiceListSerializer(many=True)
+                }
+            )
+        }
+    )
     def get(self, request):
         queryset = (
             RecurringInvoice.objects.filter(org=request.profile.org)
@@ -1365,7 +1711,25 @@ class RecurringInvoiceListView(APIView, LimitOffsetPagination):
             }
         )
 
-    @extend_schema(tags=["Recurring Invoices"], operation_id="recurring_create")
+    @extend_schema(
+        tags=["Recurring Invoices"], 
+        operation_id="recurring_create",
+        request=RecurringInvoiceCreateSerializer,
+        responses={
+            201: inline_serializer(
+                name="RecurringInvoiceCreateSuccess",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "recurring_invoice": RecurringInvoiceSerializer()
+                }
+            ),
+            400: inline_serializer(
+                name="RecurringInvoiceCreateError",
+                fields={"error": serializers.BooleanField(), "errors": serializers.DictField()}
+            )
+        }
+    )
     def post(self, request):
         cf_payload = request.data.get("custom_fields")
         if isinstance(cf_payload, str):
@@ -1412,7 +1776,20 @@ class RecurringInvoiceDetailView(APIView):
             id=pk, org=self.request.profile.org
         ).first()
 
-    @extend_schema(tags=["Recurring Invoices"], operation_id="recurring_retrieve")
+    @extend_schema(
+        tags=["Recurring Invoices"], 
+        operation_id="recurring_retrieve",
+        responses={
+            200: inline_serializer(
+                name="RecurringInvoiceRetrieveSuccess",
+                fields={
+                    "recurring_invoice": RecurringInvoiceSerializer(),
+                    "custom_field_definitions": CustomFieldDefinitionSerializer(many=True)
+                }
+            ),
+            404: inline_serializer(name="RecurringInvoiceNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        }
+    )
     def get(self, request, pk):
         recurring = self.get_object(pk)
         if not recurring:
@@ -1434,7 +1811,23 @@ class RecurringInvoiceDetailView(APIView):
             }
         )
 
-    @extend_schema(tags=["Recurring Invoices"], operation_id="recurring_update")
+    @extend_schema(
+        tags=["Recurring Invoices"], 
+        operation_id="recurring_update",
+        request=RecurringInvoiceCreateSerializer,
+        responses={
+            200: inline_serializer(
+                name="RecurringInvoiceUpdateSuccess",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "recurring_invoice": RecurringInvoiceSerializer()
+                }
+            ),
+            400: inline_serializer(name="RecurringInvoiceUpdateError", fields={"error": serializers.BooleanField(), "errors": serializers.DictField()}),
+            404: inline_serializer(name="RecurringInvoiceUpdateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        }
+    )
     def put(self, request, pk):
         recurring = self.get_object(pk)
         if not recurring:
@@ -1486,7 +1879,14 @@ class RecurringInvoiceDetailView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @extend_schema(tags=["Recurring Invoices"], operation_id="recurring_destroy")
+    @extend_schema(
+        tags=["Recurring Invoices"], 
+        operation_id="recurring_destroy",
+        responses={
+            200: inline_serializer(name="RecurringInvoiceDestroySuccess", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="RecurringInvoiceDestroyNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        }
+    )
     def delete(self, request, pk):
         recurring = self.get_object(pk)
         if not recurring:
@@ -1502,12 +1902,27 @@ class RecurringInvoiceDetailView(APIView):
         )
 
 
-class RecurringInvoicePauseView(APIView):
+class RecurringInvoicePauseView(GenericAPIView):
     """Pause or resume a recurring invoice"""
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
-    @extend_schema(tags=["Recurring Invoices"], operation_id="recurring_toggle")
+    @extend_schema(
+        tags=["Recurring Invoices"], 
+        operation_id="recurring_toggle",
+        responses={
+            200: inline_serializer(
+                name="RecurringInvoiceToggleSuccess",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "recurring_invoice": RecurringInvoiceListSerializer()
+                }
+            ),
+            404: inline_serializer(name="RecurringInvoiceToggleNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        }
+    )
     def post(self, request, pk):
         recurring = RecurringInvoice.objects.filter(
             id=pk, org=request.profile.org
@@ -1541,7 +1956,21 @@ class InvoiceTemplateListView(APIView, LimitOffsetPagination):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Invoice Templates"], operation_id="templates_list")
+    @extend_schema(
+        tags=["Invoice Templates"], 
+        operation_id="templates_list",
+        responses={
+            200: inline_serializer(
+                name="InvoiceTemplateListResponse",
+                fields={
+                    "count": serializers.IntegerField(),
+                    "next": serializers.CharField(allow_null=True),
+                    "previous": serializers.CharField(allow_null=True),
+                    "results": InvoiceTemplateSerializer(many=True)
+                }
+            )
+        }
+    )
     def get(self, request):
         queryset = InvoiceTemplate.objects.filter(org=request.profile.org).order_by(
             "-is_default", "name"
@@ -1557,7 +1986,25 @@ class InvoiceTemplateListView(APIView, LimitOffsetPagination):
             }
         )
 
-    @extend_schema(tags=["Invoice Templates"], operation_id="templates_create")
+    @extend_schema(
+        tags=["Invoice Templates"], 
+        operation_id="templates_create",
+        request=InvoiceTemplateCreateSerializer,
+        responses={
+            201: inline_serializer(
+                name="InvoiceTemplateCreateSuccess",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "template": InvoiceTemplateSerializer()
+                }
+            ),
+            400: inline_serializer(
+                name="InvoiceTemplateCreateError",
+                fields={"error": serializers.BooleanField(), "errors": serializers.DictField()}
+            )
+        }
+    )
     def post(self, request):
         serializer = InvoiceTemplateCreateSerializer(
             data=request.data, context={"request": request}
@@ -1589,7 +2036,14 @@ class InvoiceTemplateDetailView(APIView):
             id=pk, org=self.request.profile.org
         ).first()
 
-    @extend_schema(tags=["Invoice Templates"], operation_id="templates_retrieve")
+    @extend_schema(
+        tags=["Invoice Templates"], 
+        operation_id="templates_retrieve",
+        responses={
+            200: InvoiceTemplateSerializer,
+            404: inline_serializer(name="InvoiceTemplateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        }
+    )
     def get(self, request, pk):
         template = self.get_object(pk)
         if not template:
@@ -1599,7 +2053,23 @@ class InvoiceTemplateDetailView(APIView):
             )
         return Response(InvoiceTemplateSerializer(template).data)
 
-    @extend_schema(tags=["Invoice Templates"], operation_id="templates_update")
+    @extend_schema(
+        tags=["Invoice Templates"], 
+        operation_id="templates_update",
+        request=InvoiceTemplateCreateSerializer,
+        responses={
+            200: inline_serializer(
+                name="InvoiceTemplateUpdateSuccess",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "template": InvoiceTemplateSerializer()
+                }
+            ),
+            400: inline_serializer(name="InvoiceTemplateUpdateError", fields={"error": serializers.BooleanField(), "errors": serializers.DictField()}),
+            404: inline_serializer(name="InvoiceTemplateUpdateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        }
+    )
     def put(self, request, pk):
         template = self.get_object(pk)
         if not template:
@@ -1626,7 +2096,14 @@ class InvoiceTemplateDetailView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    @extend_schema(tags=["Invoice Templates"], operation_id="templates_destroy")
+    @extend_schema(
+        tags=["Invoice Templates"], 
+        operation_id="templates_destroy",
+        responses={
+            200: inline_serializer(name="InvoiceTemplateDestroySuccess", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceTemplateDestroyNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        }
+    )
     def delete(self, request, pk):
         template = self.get_object(pk)
         if not template:
@@ -1652,7 +2129,27 @@ class InvoiceCommentView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Invoice Comments"], operation_id="comments_create")
+    @extend_schema(
+        tags=["Invoice Comments"], 
+        operation_id="invoice_comments_create",
+        request=inline_serializer(
+            name="InvoiceCommentCreateRequest",
+            fields={"comment": serializers.CharField(help_text="Texto del comentario")}
+        ),
+        responses={
+            201: inline_serializer(
+                name="InvoiceCommentCreateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "comment": CommentSerializer() # Mapea tu serializador de comentarios importado
+                }
+            ),
+            400: inline_serializer(name="InvoiceCommentCreateBadRequest", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceCommentCreateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Registra un nuevo comentario asociado a la factura especificada."
+    )
     def post(self, request, invoice_id):
         invoice = Invoice.objects.filter(id=invoice_id, org=request.profile.org).first()
         if not invoice:
@@ -1695,7 +2192,27 @@ class InvoiceCommentDetailView(APIView):
     def get_object(self, pk):
         return Comment.objects.filter(id=pk, org=self.request.profile.org).first()
 
-    @extend_schema(tags=["Invoice Comments"], operation_id="comments_update")
+    @extend_schema(
+        tags=["Invoice Comments"], 
+        operation_id="invoice_comments_update",
+        request=inline_serializer(
+            name="InvoiceCommentUpdateRequest",
+            fields={"comment": serializers.CharField()}
+        ),
+        responses={
+            200: inline_serializer(
+                name="InvoiceCommentUpdateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "comment": CommentSerializer()
+                }
+            ),
+            403: inline_serializer(name="InvoiceCommentUpdateForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceCommentUpdateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Actualiza el contenido de un comentario existente si el usuario es el autor o administrador."
+    )
     def put(self, request, pk):
         comment = self.get_object(pk)
         if not comment:
@@ -1723,7 +2240,19 @@ class InvoiceCommentDetailView(APIView):
             }
         )
 
-    @extend_schema(tags=["Invoice Comments"], operation_id="comments_destroy")
+    @extend_schema(
+        tags=["Invoice Comments"], 
+        operation_id="invoice_comments_destroy",
+        responses={
+            200: inline_serializer(
+                name="InvoiceCommentDeleteResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            ),
+            403: inline_serializer(name="InvoiceCommentDeleteForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceCommentDeleteNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Elimina de forma física un comentario del historial de la factura."
+    )
     def delete(self, request, pk):
         comment = self.get_object(pk)
         if not comment:
@@ -1751,7 +2280,27 @@ class InvoiceAttachmentView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Invoice Attachments"], operation_id="attachments_create")
+    @extend_schema(
+        tags=["Invoice Attachments"], 
+        operation_id="invoice_attachments_create",
+        request=inline_serializer(
+            name="InvoiceAttachmentCreateRequest",
+            fields={"file": serializers.FileField(help_text="Archivo binario a adjuntar")}
+        ),
+        responses={
+            201: inline_serializer(
+                name="InvoiceAttachmentCreateResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "attachment": AttachmentsSerializer() # Mapea tu serializador de adjuntos importado
+                }
+            ),
+            400: inline_serializer(name="InvoiceAttachmentCreateBadRequest", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceAttachmentCreateNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Sube y asocia un nuevo archivo adjunto binario (multipart/form-data) a la factura."
+    )
     def post(self, request, invoice_id):
         invoice = Invoice.objects.filter(id=invoice_id, org=request.profile.org).first()
         if not invoice:
@@ -1791,7 +2340,19 @@ class InvoiceAttachmentDetailView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Invoice Attachments"], operation_id="attachments_destroy")
+    @extend_schema(
+        tags=["Invoice Attachments"], 
+        operation_id="invoice_attachments_destroy",
+        responses={
+            200: inline_serializer(
+                name="InvoiceAttachmentDeleteResponse",
+                fields={"error": serializers.BooleanField(), "message": serializers.CharField()}
+            ),
+            403: inline_serializer(name="InvoiceAttachmentDeleteForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceAttachmentDeleteNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()})
+        },
+        description="Elimina de forma permanente un archivo adjunto del servidor."
+    )
     def delete(self, request, pk):
         attachment = Attachments.objects.filter(id=pk, org=request.profile.org).first()
         if not attachment:
@@ -1824,7 +2385,22 @@ class InvoiceDashboardView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Reports"], operation_id="dashboard")
+    @extend_schema(
+        tags=["Reports"], 
+        operation_id="dashboard",
+        responses={
+            200: inline_serializer(
+                name="InvoiceDashboardResponse",
+                fields={
+                    "summary": serializers.JSONField(),
+                    "status_counts": serializers.JSONField(),
+                    "overdue": serializers.JSONField(),
+                    "recent_activity": serializers.JSONField(),
+                    "estimates": serializers.JSONField()
+                }
+            )
+        }
+    )
     def get(self, request):
         org = request.profile.org
         today = timezone.now().date()
@@ -1904,7 +2480,22 @@ class RevenueReportView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Reports"], operation_id="revenue_report")
+    @extend_schema(
+        tags=["Reports"], 
+        operation_id="revenue_report",
+        responses={
+            200: inline_serializer(
+                name="RevenueReportResponse",
+                fields={
+                    "start_date": serializers.CharField(),
+                    "end_date": serializers.CharField(),
+                    "group_by": serializers.CharField(),
+                    "data": serializers.ListField(child=serializers.JSONField()),
+                    "total": serializers.JSONField()
+                }
+            )
+        }
+    )
     def get(self, request):
         org = request.profile.org
 
@@ -2017,7 +2608,23 @@ class AgingReportView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
-    @extend_schema(tags=["Reports"], operation_id="aging_report")
+    @extend_schema(
+        tags=["Reports"], 
+        operation_id="aging_report",
+        responses={
+            200: inline_serializer(
+                name="AgingReportResponse",
+                fields={
+                    "current": serializers.JSONField(),
+                    "1_30_days": serializers.JSONField(),
+                    "31_60_days": serializers.JSONField(),
+                    "61_90_days": serializers.JSONField(),
+                    "over_90_days": serializers.JSONField(),
+                    "total": serializers.JSONField()
+                }
+            )
+        }
+    )
     def get(self, request):
         org = request.profile.org
         today = timezone.now().date()
@@ -2096,22 +2703,24 @@ class AgingReportView(APIView):
 # =============================================================================
 
 
-class InvoiceFromOpportunityView(APIView):
+class InvoiceFromOpportunityView(GenericAPIView):
     """
     Create an invoice from a won opportunity.
     Copies all line items from the opportunity to the new invoice.
     """
 
     permission_classes = (IsAuthenticated, HasOrgContext)
+    serializer_class = serializers.Serializer
 
     @extend_schema(
         operation_id="invoice_from_opportunity",
         tags=["Invoices"],
         description="Create an invoice from a CLOSED_WON opportunity with line items",
         responses={
-            201: InvoiceSerializer(),
-            400: {"description": "Bad request - opportunity not won or no line items"},
-            404: {"description": "Opportunity not found"},
+            201: inline_serializer(name="InvoiceFromOppSuccess", fields={"error": serializers.BooleanField(), "message": serializers.CharField(), "invoice": InvoiceSerializer()}),
+            400: inline_serializer(name="InvoiceFromOppBadReq", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            403: inline_serializer(name="InvoiceFromOppForbidden", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceFromOppNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
         },
     )
     def post(self, request, opportunity_id, *args, **kwargs):
@@ -2274,6 +2883,34 @@ class InvoiceFromTimeEntriesView(APIView):
 
     permission_classes = (IsAuthenticated, HasOrgContext)
 
+    @extend_schema(
+        operation_id="invoice_from_time_entries",
+        tags=["Invoices"],
+        description="turn billable time entries into a draft invoice",
+        request=inline_serializer(
+            name="InvoiceFromTimeEntriesRequest",
+            fields={
+                "account_id": serializers.UUIDField(),
+                "entry_ids": serializers.ListField(child=serializers.UUIDField())
+            }
+        ),
+        responses={
+            201: inline_serializer(
+                name="InvoiceFromTimeEntriesResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "invoice_id": serializers.CharField(),
+                    "invoice_number": serializers.CharField(),
+                    "currency": serializers.CharField(),
+                    "line_count": serializers.IntegerField(),
+                    "entry_ids": serializers.ListField(child=serializers.CharField())
+                }
+            ),
+            400: inline_serializer(name="InvoiceFromTimeEntriesBadReq", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+            404: inline_serializer(name="InvoiceFromTimeEntriesNotFound", fields={"error": serializers.BooleanField(), "message": serializers.CharField()}),
+        }
+    )
     def post(self, request, *args, **kwargs):
         from accounts.models import Account
         from cases.models import TimeEntry

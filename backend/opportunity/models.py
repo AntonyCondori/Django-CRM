@@ -8,6 +8,7 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.timesince import timesince
 from django.utils.translation import gettext_lazy as _
+from simple_history.models import HistoricalRecords
 
 from accounts.models import Account
 from common.base import AssignableMixin, BaseModel
@@ -41,6 +42,7 @@ class Opportunity(AssignableMixin, BaseModel):
     Opportunity model for CRM - Sales pipeline management
     Based on Twenty CRM and Salesforce patterns
     """
+    history = HistoricalRecords()
 
     # Core Opportunity Information
     name = models.CharField(_("Opportunity Name"), max_length=255)

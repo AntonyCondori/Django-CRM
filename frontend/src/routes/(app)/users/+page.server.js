@@ -21,16 +21,19 @@
  * - PUT    /api/teams/{id}/             - Update team
  * - DELETE /api/teams/{id}/             - Delete team
  */
+/**
+ * Users & Teams Management Page - API Version
+ * Migrated from Prisma to Django REST API
+ */
 
 import { error, fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/public';
 
-const API_BASE_URL = `${env.PUBLIC_DJANGO_API_URL}/api`;
+// Aseguramos que la URL base termine limpiamente sin barras conflictivas
+const API_BASE_URL = `${env.PUBLIC_DJANGO_API_URL}/api`.replace(/\/$/, '');
 
 /**
  * Flatten nested API validation errors into a readable message.
- * @param {unknown} value
- * @returns {string[]}
  */
 function collectErrorMessages(value) {
   if (!value) return [];
@@ -46,29 +49,36 @@ function collectErrorMessages(value) {
 
 /**
  * Make authenticated API request
- * @param {string} endpoint
- * @param {Object} options
- * @param {Object} context
- * @returns {Promise<any>}
  */
 async function apiRequest(endpoint, options = {}, context) {
   const { cookies, org } = context;
   const accessToken = cookies.get('jwt_access');
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  // Limpiamos el endpoint para asegurar que comience con '/'
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-      org: org.id,
+      'Authorization': `Bearer ${accessToken}`,
+      'org': org.id,
       ...options.headers
     }
   });
 
+  // Corrección crítica: Validar el estado de respuesta ANTES de asumir que es un JSON parseable
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: response.statusText }));
-    const messages = collectErrorMessages(errorData.errors || errorData.error);
-    throw new Error(messages[0] || response.statusText);
+    let errorMessage = response.statusText;
+    try {
+      const errorData = await response.json();
+      const messages = collectErrorMessages(errorData.errors || errorData.error || errorData || errorData.detail);
+      if (messages.length > 0) errorMessage = messages[0];
+    } catch {
+      // Si Django explota y devuelve un HTML de error o texto plano
+      errorMessage = `Fallo en el servidor backend (Código: ${response.status})`;
+    }
+    throw new Error(errorMessage);
   }
 
   return await response.json();
@@ -80,18 +90,15 @@ export async function load({ locals, cookies }) {
   const user = locals.user;
 
   try {
-    // Fetch users and teams in parallel
+    // Normalizamos las rutas de consulta eliminando slashes finales
     const [usersData, teamsData] = await Promise.all([
-      apiRequest('/users/', {}, { cookies, org }),
-      apiRequest('/teams/', {}, { cookies, org }).catch(() => ({ teams: [] }))
+      apiRequest('/users', {}, { cookies, org }),
+      apiRequest('/teams', {}, { cookies, org }).catch(() => ({ teams: [] }))
     ]);
 
-    // Django returns: { active_users: {...}, inactive_users: {...}, roles: [...] }
-    const activeUsers = usersData.active_users?.active_users || [];
-    const inactiveUsers = usersData.inactive_users?.inactive_users || [];
+    const activeUsers = usersData.active_users?.active_users || usersData.active_users || [];
+    const inactiveUsers = usersData.inactive_users?.inactive_users || usersData.inactive_users || [];
 
-    // Check if current user is admin
-    // Django returns user_details with id and email
     const currentUserProfile = activeUsers.find(
       (p) => p.user_details?.id === user.id || p.user_details?.email === user.email
     );
@@ -100,13 +107,10 @@ export async function load({ locals, cookies }) {
 
     if (!isAdmin) {
       return {
-        error: {
-          name: 'You do not have permission to access this page'
-        }
+        error: { name: 'No tienes permisos de administrador para acceder a esta sección.' }
       };
     }
 
-    // Combine active and inactive users, transform to match expected format
     const allUsers = [
       ...activeUsers.map((profile) => ({
         odId: profile.id,
@@ -134,8 +138,7 @@ export async function load({ locals, cookies }) {
       }))
     ];
 
-    // Transform teams - extract user IDs for form pre-population
-    const teams = (teamsData.teams || []).map((team) => ({
+    const teams = (teamsData.teams || teamsData || []).map((team) => ({
       ...team,
       userIds: (team.users || []).map((u) => u.id)
     }));
@@ -154,9 +157,7 @@ export async function load({ locals, cookies }) {
   } catch (err) {
     console.error('Error loading users:', err);
     return {
-      error: {
-        name: err.message || 'Failed to load users'
-      }
+      error: { name: err.message || 'Error al cargar los usuarios del sistema.' }
     };
   }
 }
@@ -172,18 +173,21 @@ export const actions = {
     try {
       const formData = await request.formData();
       const email = formData.get('email')?.toString().trim().toLowerCase();
-      const role = formData.get('role')?.toString();
+      const role = formData.get('role')?.toString().toUpperCase(); // Forzamos mayúsculas para Django (ADMIN/USER)
 
       if (!email || !role) {
-        return fail(400, { error: 'Email and role are required' });
+        return fail(400, { error: 'El correo electrónico y el rol son campos requeridos.' });
       }
 
-      // Create user via Django API
-      // Django endpoint: POST /api/users/
-      const userData = { email, role };
+      // Estructuramos el payload limpio adaptado a las convenciones del backend
+      const userData = { 
+        email: email, 
+        role: role
+      };
 
+      // Apuntamos al endpoint exacto '/users' sin slash final para evitar redirecciones
       await apiRequest(
-        '/users/',
+        '/users',
         {
           method: 'POST',
           body: JSON.stringify(userData)
@@ -194,17 +198,15 @@ export const actions = {
       return { success: true, action: 'add_user' };
     } catch (err) {
       console.error('Error adding user:', err);
-      // Check for specific error messages
-      if (
-        err.message.includes('already exists') ||
-        err.message.includes('already in organization')
-      ) {
-        return fail(400, { error: 'User already in organization' });
+      
+      const msg = err.message.toLowerCase();
+      if (msg.includes('already exists') || msg.includes('already in organization') || msg.includes('existe')) {
+        return fail(400, { error: 'El usuario ya se encuentra registrado en esta organización.' });
       }
-      if (err.message.includes('not found')) {
-        return fail(404, { error: 'No user found with that email' });
+      if (msg.includes('not found') || msg.includes('encontrado')) {
+        return fail(404, { error: 'No se encontró ningún usuario con ese correo electrónico.' });
       }
-      return fail(500, { error: err.message || 'Failed to add user' });
+      return fail(500, { error: err.message || 'Error interno al procesar la alta de usuario.' });
     }
   },
 
@@ -218,21 +220,18 @@ export const actions = {
     try {
       const formData = await request.formData();
       const user_id = formData.get('user_id')?.toString();
-      const role = formData.get('role')?.toString();
+      const role = formData.get('role')?.toString().toUpperCase();
 
       if (!user_id || !role) {
-        return fail(400, { error: 'User and role are required' });
+        return fail(400, { error: 'El ID de usuario y el rol son obligatorios.' });
       }
 
-      // Don't allow editing own role
       if (user_id === user.id) {
-        return fail(400, { error: 'You cannot change your own role' });
+        return fail(400, { error: 'No tienes permitido cambiar tu propio rol en el sistema.' });
       }
 
-      // Update user role via Django API
-      // Django endpoint: PATCH /api/user/{id}/ (partial update)
       await apiRequest(
-        `/user/${user_id}/`,
+        `/user/${user_id}`,
         {
           method: 'PATCH',
           body: JSON.stringify({ role })
@@ -244,14 +243,14 @@ export const actions = {
     } catch (err) {
       console.error('Error editing role:', err);
       if (err.message.includes('at least one admin')) {
-        return fail(400, { error: 'Organization must have at least one admin' });
+        return fail(400, { error: 'La organización debe mantener al menos un administrador activo.' });
       }
-      return fail(500, { error: err.message || 'Failed to edit role' });
+      return fail(500, { error: err.message || 'Error al actualizar el rol.' });
     }
   },
 
   /**
-   * Remove user from organization
+   * Remove user from organization (Soft Delete)
    */
   remove_user: async ({ request, locals, cookies }) => {
     const org = locals.org;
@@ -262,18 +261,15 @@ export const actions = {
       const user_id = formData.get('user_id')?.toString();
 
       if (!user_id) {
-        return fail(400, { error: 'User is required' });
+        return fail(400, { error: 'El ID de usuario es mandatorio.' });
       }
 
-      // Don't allow removing self
       if (user_id === user.id) {
-        return fail(400, { error: 'You cannot remove yourself' });
+        return fail(400, { error: 'No puedes removerte a ti mismo de la organización.' });
       }
 
-      // Remove user via Django API (soft delete - set is_active=False)
-      // Django endpoint: POST /api/user/{id}/status/
       await apiRequest(
-        `/user/${user_id}/status/`,
+        `/user/${user_id}/status`,
         {
           method: 'POST',
           body: JSON.stringify({ status: 'Inactive' })
@@ -285,14 +281,14 @@ export const actions = {
     } catch (err) {
       console.error('Error removing user:', err);
       if (err.message.includes('at least one admin')) {
-        return fail(400, { error: 'Organization must have at least one admin' });
+        return fail(400, { error: 'La organización debe mantener al menos un administrador activo.' });
       }
-      return fail(500, { error: err.message || 'Failed to remove user' });
+      return fail(500, { error: err.message || 'Error al desactivar el usuario.' });
     }
   },
 
   /**
-   * Activate user (restore inactive user)
+   * Activate user
    */
   activate_user: async ({ request, locals, cookies }) => {
     const org = locals.org;
@@ -302,12 +298,11 @@ export const actions = {
       const user_id = formData.get('user_id')?.toString();
 
       if (!user_id) {
-        return fail(400, { error: 'User is required' });
+        return fail(400, { error: 'El ID de usuario es mandatorio.' });
       }
 
-      // Activate user via Django API (set is_active=True)
       await apiRequest(
-        `/user/${user_id}/status/`,
+        `/user/${user_id}/status`,
         {
           method: 'POST',
           body: JSON.stringify({ status: 'Active' })
@@ -318,7 +313,7 @@ export const actions = {
       return { success: true, action: 'activate_user' };
     } catch (err) {
       console.error('Error activating user:', err);
-      return fail(500, { error: err.message || 'Failed to activate user' });
+      return fail(500, { error: err.message || 'Error al reactivar el usuario.' });
     }
   },
 
@@ -335,12 +330,11 @@ export const actions = {
       const users = formData.getAll('users').map((u) => u.toString());
 
       if (!name) {
-        return fail(400, { error: 'Team name is required' });
+        return fail(400, { error: 'El nombre del equipo es obligatorio.' });
       }
 
-      // Create team via Django API
       await apiRequest(
-        '/teams/',
+        '/teams',
         {
           method: 'POST',
           body: JSON.stringify({
@@ -357,9 +351,9 @@ export const actions = {
     } catch (err) {
       console.error('Error creating team:', err);
       if (err.message.includes('already exists')) {
-        return fail(400, { error: 'A team with this name already exists' });
+        return fail(400, { error: 'Ya existe un equipo registrado con ese nombre.' });
       }
-      return fail(500, { error: err.message || 'Failed to create team' });
+      return fail(500, { error: err.message || 'Error al crear el equipo.' });
     }
   },
 
@@ -376,17 +370,12 @@ export const actions = {
       const description = formData.get('description')?.toString().trim() || '';
       const users = formData.getAll('users').map((u) => u.toString());
 
-      if (!teamId) {
-        return fail(400, { error: 'Team ID is required' });
+      if (!teamId || !name) {
+        return fail(400, { error: 'El ID de equipo y el nombre son campos obligatorios.' });
       }
 
-      if (!name) {
-        return fail(400, { error: 'Team name is required' });
-      }
-
-      // Update team via Django API
       await apiRequest(
-        `/teams/${teamId}/`,
+        `/teams/${teamId}`,
         {
           method: 'PUT',
           body: JSON.stringify({
@@ -402,9 +391,9 @@ export const actions = {
     } catch (err) {
       console.error('Error updating team:', err);
       if (err.message.includes('already exists')) {
-        return fail(400, { error: 'A team with this name already exists' });
+        return fail(400, { error: 'Ya existe un equipo registrado con ese nombre.' });
       }
-      return fail(500, { error: err.message || 'Failed to update team' });
+      return fail(500, { error: err.message || 'Error al actualizar el equipo.' });
     }
   },
 
@@ -419,12 +408,11 @@ export const actions = {
       const teamId = formData.get('team_id')?.toString();
 
       if (!teamId) {
-        return fail(400, { error: 'Team ID is required' });
+        return fail(400, { error: 'El ID de equipo es mandatorio.' });
       }
 
-      // Delete team via Django API
       await apiRequest(
-        `/teams/${teamId}/`,
+        `/teams/${teamId}`,
         {
           method: 'DELETE'
         },
@@ -434,7 +422,7 @@ export const actions = {
       return { success: true, action: 'delete_team' };
     } catch (err) {
       console.error('Error deleting team:', err);
-      return fail(500, { error: err.message || 'Failed to delete team' });
+      return fail(500, { error: err.message || 'Error al eliminar el equipo.' });
     }
   }
 };

@@ -19,6 +19,7 @@ from __future__ import annotations
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -61,7 +62,11 @@ def _record(case, action, metadata, actor):
 # ---------------------------------------------------------------------------
 # Rule CRUD
 
-
+@extend_schema(
+    responses={200: ApprovalRuleSerializer(many=True)},
+    description="Lista o registra nuevas reglas automáticas de aprobación en el sistema."
+)
+@extend_schema(exclude=True)
 class ApprovalRuleListCreateView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
@@ -105,7 +110,11 @@ class ApprovalRuleListCreateView(APIView):
             ApprovalRuleSerializer(rule).data, status=status.HTTP_201_CREATED
         )
 
-
+@extend_schema(
+    responses={200: ApprovalRuleSerializer},
+    description="Administra, actualiza o elimina una regla de aprobación específica."
+)
+@extend_schema(exclude=True)
 class ApprovalRuleDetailView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
@@ -165,7 +174,11 @@ class ApprovalRuleDetailView(APIView):
 # ---------------------------------------------------------------------------
 # Per-case requests + decisions
 
-
+@extend_schema(
+    request=ApprovalRequestSerializer,
+    responses={200: ApprovalSerializer},
+    description="Crea una solicitud formal de aprobación para un caso específico."
+)
 class CaseRequestApprovalView(APIView):
     """``POST /api/cases/<pk>/request-approval/`` — agent fires a new request."""
 
@@ -246,7 +259,10 @@ class CaseRequestApprovalView(APIView):
             ApprovalSerializer(approval).data, status=status.HTTP_201_CREATED
         )
 
-
+@extend_schema(
+    responses={200: ApprovalSerializer},
+    description="Visualiza la bandeja de solicitudes de aprobación asignadas al usuario."
+)
 class ApprovalInboxView(APIView):
     """``GET /api/cases/approvals/`` — list approvals.
 
@@ -310,7 +326,11 @@ def _load_pending(pk, org):
         .first()
     )
 
-
+@extend_schema(
+    responses={200: ApprovalSerializer},
+    description="Aprueba una solicitud pendiente y ejecuta las acciones secundarias."
+)
+@extend_schema(exclude=True)
 class ApprovalApproveView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
@@ -356,7 +376,11 @@ class ApprovalApproveView(APIView):
             ApprovalSerializer(approval).data, status=status.HTTP_200_OK
         )
 
-
+@extend_schema(
+    responses={200: ApprovalSerializer},
+    description="Rechaza una solicitud de aprobación registrando los motivos en el historial."
+)
+@extend_schema(exclude=True)
 class ApprovalRejectView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
@@ -415,7 +439,11 @@ class ApprovalRejectView(APIView):
             ApprovalSerializer(approval).data, status=status.HTTP_200_OK
         )
 
-
+@extend_schema(
+    responses={200: ApprovalSerializer},
+    description="Cancela o retira una solicitud de aprobación previamente enviada."
+)
+@extend_schema(exclude=True)
 class ApprovalCancelView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 

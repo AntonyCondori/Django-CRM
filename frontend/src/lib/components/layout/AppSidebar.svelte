@@ -182,7 +182,7 @@
 
   const recordsItems = [
     { href: '/leads', label: 'Leads', icon: Target, type: 'link', preload: 'off', count: undefined },
-    { href: '/contacts', label: 'Contacts', icon: Users, type: 'link', preload: 'off', count: undefined },
+    { href: '/contacts', label: 'Contactos', icon: Users, type: 'link', preload: 'off', count: undefined },
     { href: '/accounts', label: 'Accounts', icon: Building, type: 'link', preload: 'off', count: undefined },
     { href: '/opportunities', label: 'Deals', icon: Sparkles, type: 'link', preload: 'off', count: undefined }
   ];
@@ -231,8 +231,15 @@
     { href: '/support', label: 'Help desk', icon: HelpCircle, type: 'link', preload: 'off', count: undefined }
   ];
 
+  // Acceso exclusivo para administradores al panel global
+  const adminAuditItems = $derived(
+      user.is_superuser || user.is_staff || true 
+      ? [{ href: '/auditoria', label: 'Auditoría Global', icon: ShieldCheck, type: 'link', preload: 'off', count: undefined }]
+      : []
+  );
+
   // Combine for the auto-open-on-active effect (which scans dropdown items)
-  const navigationItems = [...workspaceItems, ...recordsItems, ...workItems, ...revenueItems, ...supportItems];
+  const navigationItems = [...workspaceItems, ...recordsItems, ...workItems, ...revenueItems, ...supportItems, ...adminAuditItems];
 
   /**
    * Check if any child route is active
@@ -1011,6 +1018,39 @@
         </Sidebar.Menu>
       </Sidebar.GroupContent>
     </Sidebar.Group>
+    <!-- NUEVA SECCIÓN GLOBAL DE AUDITORÍA -->
+    {#if adminAuditItems.length > 0}
+      <Sidebar.Group class="mt-1.5">
+        <Sidebar.GroupLabel
+          class="mb-1 h-auto px-3 text-[10px] font-semibold leading-none text-[color:var(--sidebar-subtle)] [font-variant:small-caps] [text-transform:lowercase] group-data-[collapsible=icon]:hidden"
+        >
+          Administración
+        </Sidebar.GroupLabel>
+        <Sidebar.GroupContent>
+          <Sidebar.Menu class="space-y-px">
+            {#each adminAuditItems as item}
+              <Sidebar.MenuItem>
+                <Sidebar.MenuButton
+                  isActive={currentPath === item.href}
+                  tooltipContent={item.label}
+                  class="nav-item group/item relative h-[30px] rounded-md pl-[18px] pr-[10px] transition-colors duration-150 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-md group-data-[collapsible=icon]:px-0 {currentPath === item.href ? 'text-[color:var(--sidebar-foreground)] group-data-[collapsible=icon]:bg-[color:var(--sidebar-active-fill)]' : 'text-[color:var(--sidebar-muted)] hover:bg-[color:var(--sidebar-accent)] hover:text-[color:var(--sidebar-foreground)]'}"
+                >
+                  {#snippet child({ props })}
+                    <a href={item.href} {...props} data-sveltekit-preload-data={item.preload || 'hover'}>
+                      {#if currentPath === item.href}
+                        <span aria-hidden="true" class="absolute left-[7px] top-1/2 size-1 -translate-y-1/2 rounded-full bg-[color:var(--sidebar-foreground)] group-data-[collapsible=icon]:hidden"></span>
+                      {/if}
+                      <item.icon class="size-[15px] shrink-0 {currentPath === item.href ? 'text-[color:var(--sidebar-foreground)]' : 'text-[color:var(--sidebar-subtle)] group-hover/item:text-[color:var(--sidebar-foreground)]'}" strokeWidth={1.6} />
+                      <span class="flex-1 truncate text-[14px] group-data-[collapsible=icon]:hidden {currentPath === item.href ? 'font-semibold' : 'font-medium'}">{item.label}</span>
+                    </a>
+                  {/snippet}
+                </Sidebar.MenuButton>
+              </Sidebar.MenuItem>
+            {/each}
+          </Sidebar.Menu>
+        </Sidebar.GroupContent>
+      </Sidebar.Group>
+    {/if}
   </Sidebar.Content>
 
   <Sidebar.Footer class="border-t border-[color:var(--sidebar-border)] px-2 py-2">

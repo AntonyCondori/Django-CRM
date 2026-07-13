@@ -60,6 +60,7 @@ frontend/build/
 frontend/.env
 frontend/.env.local
 frontend/package-lock.json
+frontend/.pnpm-store/**
 
 # Logs
 logs/
@@ -79,3 +80,9 @@ TODO.md
 .playwright-mcp
 .superpowers/
 credenciales.json
+
+# node
+node_modules/
+
+# GitHub Actions Runner
+actions-runner/

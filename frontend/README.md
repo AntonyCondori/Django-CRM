@@ -99,7 +99,7 @@ pnpm install
 ```env
 # Database Configuration
 DATABASE_URL="postgresql://postgres:password@localhost:5432/bottlecrm?schema=public"
-
+#cambio waos
 # JWT Secret (required for authentication)
 # Generate a secure secret using openssl:
 #   openssl rand -base64 32

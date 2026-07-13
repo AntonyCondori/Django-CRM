@@ -297,6 +297,7 @@ class TagsDetailView(APIView):
         )
 
 
+@extend_schema(exclude=True)
 class TagsRestoreView(APIView):
     """Restore an archived tag."""
 

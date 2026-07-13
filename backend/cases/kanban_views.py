@@ -79,6 +79,17 @@ class CaseKanbanView(APIView):
                 type=str,
             ),
         ],
+        responses={
+            200: inline_serializer(
+                name="CaseKanbanResponse",
+                fields={
+                    "mode": serializers.CharField(),
+                    "pipeline": serializers.JSONField(required=False, allow_null=True),
+                    "columns": serializers.ListField(child=serializers.JSONField()),
+                    "total_cases": serializers.IntegerField(),
+                }
+            )
+        }
     )
     def get(self, request):
         """Get kanban board data."""
@@ -225,6 +236,17 @@ class CaseMoveView(APIView):
         tags=["Cases Kanban"],
         operation_id="case_move",
         request=CaseMoveSerializer,
+        responses={
+            200: inline_serializer(
+                name="CaseMoveResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "case": CaseKanbanCardSerializer() # Mapea limpiamente tu serializador importado
+                }
+            )
+        },
+        description="Actualiza la columna y posición de orden de un caso al arrastrar la tarjeta en el tablero Kanban."
     )
     @transaction.atomic
     def patch(self, request, pk):
@@ -603,6 +625,13 @@ class CaseStageReorderView(APIView):
             name="CaseStageReorderRequest",
             fields={"stage_ids": serializers.ListField(child=serializers.UUIDField())},
         ),
+        responses={
+            200: inline_serializer(
+                name="CaseStageReorderResponse",
+                fields={"message": serializers.CharField()}
+            )
+        },
+        description="Reordena de forma masiva e indexada el orden de las etapas dentro de un pipeline específico."
     )
     @transaction.atomic
     def post(self, request, pipeline_pk):

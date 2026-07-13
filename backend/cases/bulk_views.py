@@ -2,7 +2,8 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +19,27 @@ ALLOWED_M2M = {"assigned_to": Profile, "tags": Tags}
 class BulkUpdateCasesView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
+    @extend_schema(
+        tags=["Cases Bulk Operations"],
+        operation_id="cases_bulk_update",
+        description="Actualiza de forma masiva múltiples campos para un lote de casos seleccionados.",
+        request=inline_serializer(
+            name="BulkUpdateCasesRequest",
+            fields={
+                "ids": serializers.ListField(child=serializers.CharField()),
+                "fields": serializers.JSONField()
+            }
+        ),
+        responses={
+            200: inline_serializer(
+                name="BulkUpdateCasesResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "updated": serializers.IntegerField()
+                }
+            )
+        }
+    )
     def post(self, request):
         ids = request.data.get("ids") or []
         fields = request.data.get("fields") or {}
@@ -82,6 +104,26 @@ class BulkUpdateCasesView(APIView):
 class BulkDeleteCasesView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
+    @extend_schema(
+        tags=["Cases Bulk Operations"],
+        operation_id="cases_bulk_delete",
+        description="Desactiva de forma lógica y masiva un listado de casos mediante sus identificadores.",
+        request=inline_serializer(
+            name="BulkDeleteCasesRequest",
+            fields={
+                "ids": serializers.ListField(child=serializers.CharField())
+            }
+        ),
+        responses={
+            200: inline_serializer(
+                name="BulkDeleteCasesResponse",
+                fields={
+                    "error": serializers.BooleanField(),
+                    "deleted": serializers.IntegerField()
+                }
+            )
+        }
+    )
     def post(self, request):
         ids = request.data.get("ids") or []
         if not ids:

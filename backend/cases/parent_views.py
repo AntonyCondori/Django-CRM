@@ -16,7 +16,8 @@ from datetime import date
 
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -69,6 +70,20 @@ def _record(case, action, metadata, actor):
 class CaseTreeView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
+    @extend_schema(
+        tags=["Cases Hierarchy"],
+        operation_id="cases_tree_retrieve",
+        description="Obtiene el árbol jerárquico completo de incidentes (padres e hijos) del caso actual.",
+        responses={
+            200: inline_serializer(
+                name="CaseTreeResponse",
+                fields={
+                    "root": serializers.JSONField(),
+                    "focus_id": serializers.CharField()
+                }
+            )
+        }
+    )
     def get(self, request, pk):
         org = request.profile.org
         case = get_object_or_404(
@@ -93,6 +108,24 @@ class CaseLinkParentView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
     @transaction.atomic
+    @extend_schema(
+        tags=["Cases Hierarchy"],
+        operation_id="cases_link_parent",
+        description="Establece o remueve el vínculo de dependencia con un caso padre.",
+        request=inline_serializer(
+            name="CaseLinkParentRequest",
+            fields={"parent_id": serializers.UUIDField(required=False, allow_null=True)}
+        ),
+        responses={
+            200: inline_serializer(
+                name="CaseLinkParentResponse",
+                fields={
+                    "id": serializers.CharField(),
+                    "parent": serializers.JSONField(required=False, allow_null=True)
+                }
+            )
+        }
+    )
     def post(self, request, pk):
         org = request.profile.org
         parent_id = request.data.get("parent_id")
@@ -235,6 +268,29 @@ class CaseCloseWithChildrenView(APIView):
     permission_classes = (IsAuthenticated, HasOrgContext)
 
     @transaction.atomic
+    @extend_schema(
+        tags=["Cases Hierarchy"],
+        operation_id="cases_close_with_children",
+        description="Cierra de forma definitiva un caso principal y ejecuta opcionalmente el cierre en cascada de sus descendientes.",
+        request=inline_serializer(
+            name="CaseCloseWithChildrenRequest",
+            fields={
+                "resolution_comment": serializers.CharField(required=False, allow_blank=True),
+                "cascade": serializers.BooleanField(required=False)
+            }
+        ),
+        responses={
+            200: inline_serializer(
+                name="CaseCloseWithChildrenResponse",
+                fields={
+                    "id": serializers.CharField(),
+                    "status": serializers.CharField(),
+                    "cascaded_case_ids": serializers.ListField(child=serializers.CharField()),
+                    "resolution_comment": serializers.CharField()
+                }
+            )
+        }
+    )
     def post(self, request, pk):
         org = request.profile.org
         case = (

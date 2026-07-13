@@ -130,3 +130,22 @@ jobs:
       - name: Build
         working-directory: frontend
         run: pnpm build
+
+  deploy-local:
+    name: Despliegue Local en Docker
+    # Solo ejecuta si el backend y frontend pasaron las pruebas exitosamente
+    needs: [backend-tests, frontend-checks]
+    # Solo ejecuta si el cambio se hizo en la rama master
+    if: github.ref == 'refs/heads/master'
+    # ¡Aquí está la magia! Le decimos que corra en tu máquina, no en la nube de GitHub
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Desplegar con Docker Compose
+        # Este comando apagará los contenedores viejos, reconstruirá las imágenes con el código nuevo y los volverá a encender
+        run: |
+          docker compose down
+          docker compose up -d --build

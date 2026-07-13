@@ -45,10 +45,11 @@
   import { INDUSTRIES } from '$lib/constants/lead-choices.js';
   import { getCountryName } from '$lib/constants/countries.js';
 
-  /** @type {{ data: { lead: any, comments: any[], attachments: any[], tags: any[], users: any[], commentPermission: boolean, customFieldDefinitions: any[], customFieldValues: Record<string, unknown> } }} */
+  /** @type {{ data: { lead: any, history: any [], comments: any[], attachments: any[], tags: any[], users: any[], commentPermission: boolean, customFieldDefinitions: any[], customFieldValues: Record<string, unknown> } }} */
   let { data } = $props();
 
   const lead = $derived(data.lead || {});
+  const history = $derived(data.history || []);
   const comments = $derived(data.comments || []);
   const attachments = $derived(data.attachments || []);
   const tags = $derived(data.tags || []);
@@ -252,6 +253,14 @@
       >
         {attachments.length}
       </span>
+    </Tabs.Trigger>
+
+    <!-- NUEVA PESTAÑA DE AUDITORÍA -->
+    <Tabs.Trigger class="" value="audit">
+        Auditoría
+        <span class="ml-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[color:var(--bg-elevated)] px-1 text-[10px] tabular-nums text-[color:var(--text-subtle)]">
+            {history.length}
+        </span>
     </Tabs.Trigger>
   </Tabs.List>
 
@@ -704,5 +713,63 @@
           {/if}
         </SectionCard>
     </div>
+  </Tabs.Content>
+
+  <!-- NUEVO CONTENIDO DE LA PESTAÑA DE AUDITORÍA -->
+  <Tabs.Content class="" value="audit">
+      <div class="pt-4 pb-8">
+          <SectionCard title="Historial de Auditoría del Lead">
+              {#if history.length === 0}
+                  <p class="text-[12px] italic text-[color:var(--text-subtle)]">No hay registros de auditoría para este lead.</p>
+              {:else}
+                  <div class="overflow-x-auto">
+                      <table class="w-full text-left text-[12px] border-collapse">
+                          <thead>
+                              <tr class="bg-[color:var(--bg-elevated)] text-[color:var(--text-subtle)] font-medium border-b border-[color:var(--border-faint)]">
+                                  <th class="p-3">Fecha y Hora</th>
+                                  <th class="p-3">Usuario</th>
+                                  <th class="p-3">Acción</th>
+                                  <th class="p-3">Cambios Realizados</th>
+                              </tr>
+                          </thead>
+                          <tbody class="divide-y divide-[color:var(--border-faint)]">
+                              {#each history as log}
+                                  <tr class="hover:bg-[color:var(--bg-elevated)]/30">
+                                      <td class="p-3 text-[color:var(--text-muted)] whitespace-nowrap">
+                                          {new Date(log.history_date).toLocaleString()}
+                                      </td>
+                                      <td class="p-3 font-medium text-blue-600 truncate max-w-[180px]" title={log.history_user}>
+                                          {log.history_user}
+                                      </td>
+                                      <td class="p-3">
+                                          <span class="px-2 py-0.5 rounded text-[11px] font-semibold 
+                                              {log.history_type === 'Creación' ? 'bg-green-100 text-green-700' : ''}
+                                              {log.history_type === 'Modificación' ? 'bg-amber-100 text-amber-700' : ''}
+                                              {log.history_type === 'Eliminación' ? 'bg-red-100 text-red-700' : ''}">
+                                              {log.history_type}
+                                          </span>
+                                      </td>
+                                      <td class="p-3 text-[color:var(--text)]">
+                                          {#each log.changes as change}
+                                              <div class="my-0.5">
+                                                  <strong class="text-[color:var(--text-muted)]">{change.field}:</strong> 
+                                                  {#if change.old}
+                                                      <span class="line-through text-red-500 bg-red-50 px-1 rounded">{change.old}</span>
+                                                  {:else}
+                                                      <span class="italic text-gray-400">vacio</span>
+                                                  {/if}
+                                                  <span class="mx-1">→</span>
+                                                  <span class="text-green-700 bg-green-50 px-1 rounded font-medium">{change.new}</span>
+                                              </div>
+                                          {/each}
+                                      </td>
+                                  </tr>
+                              {/each}
+                          </tbody>
+                      </table>
+                  </div>
+              {/if}
+          </SectionCard>
+      </div>
   </Tabs.Content>
 </Tabs.Root>

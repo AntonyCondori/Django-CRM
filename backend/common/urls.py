@@ -38,6 +38,7 @@ from common.views.user_views import (
     UsersListView,
     UserStatusView,
 )
+from common.views.audit_views import GlobalAuditListView
 
 app_name = "api_common"
 
@@ -117,5 +118,11 @@ urlpatterns = [
         "notifications/<str:pk>/",
         NotificationDetailView.as_view(),
         name="notifications_detail",
+    ),
+    # Panel de Auditoría Global para Administradores
+    path(
+        "auditoria/global/",
+        GlobalAuditListView.as_view(),
+        name="global_audit_logs"
     ),
 ]

@@ -1020,3 +1020,28 @@ class LeadDetailView(APIView):
             {"error": True, "errors": "you don't have permission to delete this lead"},
             status=status.HTTP_403_FORBIDDEN,
         )
+    
+
+class LeadHistoryView(APIView):
+    """
+    Endpoint para que el Frontend consulte el historial de auditoría de un Lead.
+    """
+    model = Lead
+    permission_classes = (IsAuthenticated, HasOrgContext)
+
+    def get_object(self, pk, request):
+        return get_object_or_404(Lead, id=pk, org=request.profile.org)
+
+    @extend_schema(
+        tags=["Leads Auditoría"],
+        operation_id="leads_history",
+        parameters=swagger_params.organization_params,
+        description="Historial de auditoría para un Lead específico",
+    )
+    def get(self, request, pk, *args, **kwargs):
+        lead_obj = self.get_object(pk, request)
+        history_records = lead_obj.history.all().order_by('-history_date')
+        
+        from leads.serializer import LeadHistorySerializer
+        serializer = LeadHistorySerializer(history_records, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "orders",
     "business_hours",
     "macros",
+    "simple_history",
     # "teams",  # Merged into common app
 ]
 
@@ -55,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",  # CSRF protection
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -353,3 +355,7 @@ SWAGGER_ROOT_URL = os.environ.get("SWAGGER_ROOT_URL", "http://localhost:8000")
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "")
+
+# Configuración avanzada para Django Simple History con JWT y CRUM
+SIMPLE_HISTORY_REVERSE_RELATION_NAME = 'audit_log'
+SIMPLE_HISTORY_CURRENT_USER_GETTER = 'crum.get_current_user'

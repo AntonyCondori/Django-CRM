@@ -181,7 +181,7 @@
 
   const recordsItems = [
     { href: '/leads', label: 'Leads', icon: Target, type: 'link', preload: 'off', count: undefined },
-    { href: '/contacts', label: 'Contacts', icon: Users, type: 'link', preload: 'off', count: undefined },
+    { href: '/contacts', label: 'Contactos', icon: Users, type: 'link', preload: 'off', count: undefined },
     { href: '/accounts', label: 'Accounts', icon: Building, type: 'link', preload: 'off', count: undefined },
     { href: '/opportunities', label: 'Deals', icon: Sparkles, type: 'link', preload: 'off', count: undefined }
   ];

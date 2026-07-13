@@ -82,3 +82,6 @@ TODO.md
 
 # node
 node_modules/
+
+# GitHub Actions Runner
+actions-runner/

@@ -1,24 +1,17 @@
 # Diseño del Sistema de Auditoría (#86)
 
-## 1. ¿Qué vamos a auditar?
-Para empezar de forma rápida y enfocada, auditaremos la tabla de **Leads** (Clientes Potenciales). Es la parte más importante del CRM porque maneja los datos de las ventas, los estados del negocio y qué asesor tiene asignado cada cliente.
+## 1. Justificación técnica
+Para optimizar el control de datos sin afectar el rendimiento, se implementó un sistema de auditoría automatizado mediante la librería `django-simple-history`. El alcance inicial cubre los módulos críticos de **Leads, Contacts, Accounts y Opportunity**, ya que gestionan el flujo financiero y comercial principal del CRM.
 
-## 2. Acciones que se van a registrar
-El sistema guardará un registro de forma automática cada vez que pase una de estas tres cosas con un Lead:
-* **Creación (+):** Cuando se registra un Lead nuevo.
-* **Modificación (~):** Cuando se edita cualquier dato (Guarda el cambio y el valor anterior).
-* **Eliminación (-):** Cuando alguien borra un Lead (Así no se pierde el rastro de la información).
+## 2. ¿Cómo se hizo? (Componentes clave)
+La integración se estructuró de manera modular modificando los siguientes archivos esenciales del proyecto:
+* **`backend/crm/settings.py`**: Se activó la aplicación `simple_history` y su middleware global junto al componente `crum` para capturar sesiones JWT.
+* **Módulos de datos (ej. `leads/models.py`)**: Se inyectó la propiedad `history = HistoricalRecords()` para activar la creación de tablas espejo automatizadas.
+* **`backend/common/views/audit_views.py`**: Se diseñó la lógica independiente `GlobalAuditListView` para mezclar cronológicamente los registros históricos.
+* **`frontend/src/routes/(app)/auditoria/`**: Se construyó la interfaz en SvelteKit con componentes reactivos y filtros dinámicos por módulo para los administradores.
 
-## 3. Datos que se van a guardar (Estructura)
-Por cada cambio que ocurra, la base de datos creará un registro de auditoría en una tabla espejo con los siguientes datos:
-* **ID del Historial:** Un número único para identificar ese registro de auditoría.
-* **Fecha y Hora:** El momento exacto en el que se hizo el cambio.
-* **Usuario:** Quién fue la persona logueada en el CRM que hizo la acción.
-* **Tipo de Acción:** Si fue una creación, edición o eliminación.
-* **Copia de los datos:** Una "fotografía" de cómo estaba el Lead en ese preciso instante.
-
-## 4. ¿Cómo funciona el flujo?
-1. El usuario hace un cambio en el CRM (por ejemplo, edita el teléfono de un Lead).
-2. La aplicación recibe la petición y el "Middleware" (el vigilante del backend) identifica automáticamente qué usuario está conectado.
-3. Django guarda el cambio normal en la tabla de Leads.
-4. Al mismo tiempo, la librería que instalamos toma los datos del usuario, el cambio realizado, la hora, y lo guarda todo en la tabla de historial sin que el usuario note ninguna lentitud.
+## 3. ¿Cómo funciona el flujo de datos?
+1. **Acción del usuario**: Un operador edita o elimina un registro desde la interfaz visual del CRM.
+2. **Intercepción del Backend**: La petición HTTP es evaluada por `HistoryRequestMiddleware`, el cual extrae de forma transparente la identidad del usuario autenticado.
+3. **Persistencia dual**: Django guarda el cambio en la tabla activa del módulo e, inmediatamente, la librería toma una "fotografía" del estado anterior y nuevo de los datos.
+4. **Almacenamiento seguro**: Toda la información (fecha, autor, tipo de operación `+`, `~`, `-` y campos modificados) se inserta de forma atómica en la tabla histórica de auditoría.
